@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="IssueHub logo">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#22C55E"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="url(#g)"/>
+  <g fill="#ffffff">
+    <circle cx="20" cy="22" r="4"/>
+    <rect x="14" y="30" width="36" height="6" rx="3"/>
+    <rect x="14" y="40" width="24" height="6" rx="3" opacity="0.9"/>
+  </g>
+</svg>
+

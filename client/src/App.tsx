@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import Header from './components/Header'
 import FiltersPanel from './components/FiltersPanel'
 import IssueList from './components/IssueList'
+import Footer from './components/Footer'
 
 const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('')
@@ -71,6 +72,11 @@ const App: React.FC = () => {
           </div>
         </div>
       </main>
+      <Footer
+        githubUrl="https://github.com/devlopersumit"
+        linkedinUrl="https://www.linkedin.com/in/sumit-jha?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
+        twitterUrl="https://x.com/_sumitjha_?t=4nSWLPjfWOEhS06PoX9-Lg&s=09"
+      />
     </div>
   )
 }

@@ -11,7 +11,10 @@ const Header: React.FC<HeaderProps> = ({ title = 'IssueHub', searchTerm, onSearc
   return (
     <header className="w-full border-b bg-white">
       <div className="mx-auto max-w-7xl px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{title}</h1>
+        <div className="flex items-center gap-2">
+          <img src="/logo.svg" alt="IssueHub" className="h-7 w-7" />
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{title}</h1>
+        </div>
         <form
           className="flex items-center gap-3 w-full sm:w-auto"
           onSubmit={(e) => {
