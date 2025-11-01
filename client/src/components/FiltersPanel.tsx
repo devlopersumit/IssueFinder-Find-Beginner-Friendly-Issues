@@ -43,7 +43,7 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({ className = '', selectedLab
   }, [searchLang])
 
   return (
-    <aside className={`bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded ${className}`}>
+    <aside className={`bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded transition-colors duration-200 ${className}`}>
       <div className="p-4">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 uppercase tracking-wide">Filters</h2>
         <div className="space-y-5">

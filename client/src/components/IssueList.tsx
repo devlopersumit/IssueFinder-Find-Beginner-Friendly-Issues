@@ -47,7 +47,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query }) => {
   }
 
   return (
-    <section className={`bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded ${className}`}>
+    <section className={`bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded transition-colors duration-200 ${className}`}>
       <div className="p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Issues</h2>
@@ -100,7 +100,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query }) => {
             const issue = item
             const repo = issue.repository_url?.split('/').slice(-2).join('/')
             return (
-              <article key={issue.id} className="p-4 border border-gray-300 dark:border-gray-700 rounded hover:border-slate-500 dark:hover:border-slate-500 bg-white dark:bg-gray-800">
+              <article key={issue.id} className="p-4 border border-gray-300 dark:border-gray-700 rounded hover:border-slate-500 dark:hover:border-slate-500 bg-white dark:bg-gray-800 transition-colors duration-200">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <a 

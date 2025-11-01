@@ -7,6 +7,20 @@ html.dark {
   color-scheme: dark;
 }
 
+/* Smooth transitions for theme changes - apply to elements that change colors */
+html {
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+body {
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+/* Smooth transitions for all elements with dark mode classes */
+[class*="dark:"] {
+  transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease;
+}
+
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;

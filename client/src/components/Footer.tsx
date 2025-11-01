@@ -12,7 +12,7 @@ const Footer: React.FC<FooterProps> = ({
   twitterUrl = 'https://x.com/_sumitjha_?t=4nSWLPjfWOEhS06PoX9-Lg&s=09'
 }) => {
   return (
-    <footer className="border-t border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 mt-8">
+    <footer className="border-t border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 mt-8 transition-colors duration-200">
       <div className="mx-auto max-w-7xl px-4 py-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex-1">
