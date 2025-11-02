@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useFetchRepositories } from '../hooks/useFetchRepositories'
+import { useSearchRepository } from '../hooks/useSearchRepository'
 import RepositoryModal from './RepositoryModal'
 
 type RepositoryListProps = {
@@ -11,9 +12,16 @@ const RepositoryList: React.FC<RepositoryListProps> = ({ className = '', languag
   const [page, setPage] = useState<number>(1)
   const [sort, setSort] = useState<'stars' | 'updated' | 'forks'>('stars')
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState<string>('')
   const perPage = 20
   const [items, setItems] = useState<any[]>([])
   const { data, isLoading, error } = useFetchRepositories(language, sort, page, perPage)
+  const { results: searchResults, isLoading: isSearching, error: searchError } = useSearchRepository(searchQuery.trim() || null)
+  
+  const isSearchMode = searchQuery.trim().length >= 2
+  const displayItems = isSearchMode ? searchResults : items
+  const displayLoading = isSearchMode ? isSearching : isLoading
+  const displayError = isSearchMode ? searchError : error
 
   useEffect(() => {
     setPage(1)
@@ -52,9 +60,47 @@ const RepositoryList: React.FC<RepositoryListProps> = ({ className = '', languag
   return (
     <section className={`bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded transition-colors duration-200 ${className}`}>
       <div className="p-4">
+        {/* Search Input */}
+        <div className="mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search repository (e.g., facebook/react or just react)..."
+              className="w-full rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 px-4 py-2 pl-10 text-sm focus:outline-none focus:ring-1 focus:ring-slate-500 dark:focus:ring-slate-400 focus:border-slate-500"
+            />
+            <svg
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                aria-label="Clear search"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchQuery.trim().length > 0 && searchQuery.trim().length < 2 && (
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Type at least 2 characters to search</p>
+          )}
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Best Repositories</h2>
-          <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            {isSearchMode ? `Search Results${searchResults.length > 0 ? ` (${searchResults.length})` : ''}` : 'Best Repositories'}
+          </h2>
+          {!isSearchMode && (
+            <div className="flex items-center gap-2">
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as 'stars' | 'updated' | 'forks')}
@@ -65,7 +111,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({ className = '', languag
               <option value="forks">Most Forks</option>
             </select>
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              {isLoading && items.length === 0 ? (
+              {displayLoading && displayItems.length === 0 ? (
                 <span className="flex items-center gap-2">
                   <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -73,28 +119,37 @@ const RepositoryList: React.FC<RepositoryListProps> = ({ className = '', languag
                   </svg>
                   Loading…
                 </span>
-              ) : error ? (
+              ) : displayError ? (
                 <span className="text-red-600 dark:text-red-400">Error</span>
               ) : (
                 <span className="font-medium">{totalCount.toLocaleString()} repos</span>
               )}
             </span>
           </div>
+          )}
         </div>
 
-        {items.length === 0 && !isLoading && !error && (
+        {displayItems.length === 0 && !displayLoading && !displayError && (
           <div className="text-center py-8">
             <svg className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              {isSearchMode ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              )}
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No repositories found</h3>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Try adjusting your filters.</p>
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+              {isSearchMode ? 'No repositories found' : 'No repositories found'}
+            </h3>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {isSearchMode ? 'Try searching with a different query or repository name.' : 'Try adjusting your filters.'}
+            </p>
           </div>
         )}
 
         <div className="space-y-3">
-          {(items.length ? items : [1, 2, 3]).map((item: any, idx: number) => {
-            if (!items.length) {
+          {(displayItems.length ? displayItems : [1, 2, 3]).map((item: any, idx: number) => {
+            if (!displayItems.length) {
               return (
                 <article key={`placeholder-${idx}`} className="p-4 border border-gray-300 dark:border-gray-700 rounded animate-pulse">
                   <div className="flex items-start gap-4">
@@ -195,8 +250,9 @@ const RepositoryList: React.FC<RepositoryListProps> = ({ className = '', languag
           })}
         </div>
 
-        <div className="mt-4 flex justify-center items-center gap-3">
-          {canLoadMore && (
+        {!isSearchMode && (
+          <div className="mt-4 flex justify-center items-center gap-3">
+            {canLoadMore && (
             <button
               type="button"
               onClick={() => setPage((p) => p + 1)}
@@ -214,8 +270,9 @@ const RepositoryList: React.FC<RepositoryListProps> = ({ className = '', languag
               </svg>
               Loading more...
             </span>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
       <RepositoryModal repoFullName={selectedRepo} onClose={() => setSelectedRepo(null)} />
     </section>
