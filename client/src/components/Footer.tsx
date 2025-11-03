@@ -23,11 +23,11 @@ const Footer: React.FC<FooterProps> = ({
               </span>
             </div>
             <p className="text-xs text-gray-600 dark:text-gray-400 max-w-xl mb-2">
-              Find the most recently created GitHub issues that are not assigned to anyone, filtered by your preferred programming language. 
-              Perfect for beginners looking to contribute to open source.
+              Discover GitHub issues and repositories across all categories - from bug fixes to features, documentation to refactoring. 
+              Find the perfect opportunity to start or continue your open source contribution journey.
             </p>
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 italic">
-              Developed this projects with frsutration of finding beginner friendly issue by a developer
+              Developed with the frustration of finding the right issues to contribute to open source by a developer
             </p>
             <div className="flex items-center gap-3">
               <a 
