@@ -121,11 +121,27 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query }) => {
                     {issue.labels && issue.labels.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {issue.labels.slice(0, 4).map((l: any, i: number) => {
+                          const labelLower = l.name.toLowerCase()
                           const colors: Record<string, string> = {
                             'good first issue': 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700',
                             'help wanted': 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700',
+                            'enhancement': 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700',
+                            'bug': 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700',
+                            'feature': 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700',
+                            'documentation': 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700',
+                            'refactor': 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-700',
+                            'performance': 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700',
+                            'testing': 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 border-pink-300 dark:border-pink-700',
+                            'question': 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border-teal-300 dark:border-teal-700',
                           }
-                          const colorClass = colors[l.name.toLowerCase()] || 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
+                          // Check for exact match or contains match
+                          let colorClass = 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
+                          for (const [key, value] of Object.entries(colors)) {
+                            if (labelLower === key || labelLower.includes(key)) {
+                              colorClass = value
+                              break
+                            }
+                          }
                           return (
                             <span 
                               key={`${issue.id}-label-${i}`} 
