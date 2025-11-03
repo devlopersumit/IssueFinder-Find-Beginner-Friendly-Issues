@@ -15,7 +15,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'IssueFinder', searchTerm, onSe
     <header className="w-full border-b border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 transition-colors duration-200">
       <div className="mx-auto max-w-7xl px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-2">
-          <img src="/logo.svg" alt="IssueFinder" className="h-7 w-7" />
+          <img src="/issuefinder-2.png" alt="IssueFinder" className="h-7 w-7" />
           <h1 className="text-xl sm:text-2xl font-semibold text-slate-700 dark:text-slate-300">{title}</h1>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
