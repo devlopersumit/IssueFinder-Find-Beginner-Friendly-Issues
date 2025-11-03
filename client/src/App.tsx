@@ -12,12 +12,25 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('issues')
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [submittedSearch, setSubmittedSearch] = useState<string>('')
-  const [selectedLabels, setSelectedLabels] = useState<string[]>(['good first issue'])
+  const [selectedLabels, setSelectedLabels] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>('javascript')
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false)
 
   const toggleLabel = (label: string) => {
     setSelectedLabels((prev) => (prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]))
+  }
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((prev) => {
+      if (category === 'all') {
+        return prev.includes('all') ? [] : ['all']
+      }
+      if (prev.includes(category)) {
+        return prev.filter((c) => c !== category)
+      }
+      return [...prev.filter((c) => c !== 'all'), category]
+    })
   }
 
   const onSubmitSearch = () => {
@@ -28,10 +41,30 @@ const App: React.FC = () => {
     const parts: string[] = []
     if (submittedSearch) parts.push(submittedSearch)
     parts.push('state:open')
-    selectedLabels.forEach((l) => parts.push(`label:"${l}"`))
+    parts.push('no:assignee') // Only unassigned issues
+    
+    // Handle categories - if 'all' is selected or no category selected, show all
+    if (selectedCategories.length > 0 && !selectedCategories.includes('all')) {
+      // Build OR query for multiple categories
+      // GitHub API format: label:"bug" OR label:"feature"
+      const categoryQueries = selectedCategories.map((cat) => `label:"${cat}"`)
+      if (categoryQueries.length === 1) {
+        parts.push(categoryQueries[0])
+      } else if (categoryQueries.length > 1) {
+        // Use OR for multiple labels
+        parts.push(`(${categoryQueries.join(' OR ')})`)
+      }
+    }
+    // If 'all' is selected or nothing selected, don't filter by category
+    
+    // Legacy label support (backward compatibility) - add these as additional filters
+    if (selectedLabels.length > 0) {
+      selectedLabels.forEach((l) => parts.push(`label:"${l}"`))
+    }
+    
     if (selectedLanguage) parts.push(`language:${selectedLanguage}`)
     return parts.join(' ')
-  }, [submittedSearch, selectedLabels, selectedLanguage])
+  }, [submittedSearch, selectedLabels, selectedCategories, selectedLanguage])
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
@@ -90,6 +123,8 @@ const App: React.FC = () => {
               selectedLanguage={selectedLanguage}
               onChangeLanguage={setSelectedLanguage}
               showTags={viewMode === 'issues'}
+              selectedCategories={selectedCategories}
+              onToggleCategory={toggleCategory}
             />
           </div>
         )}
@@ -102,6 +137,8 @@ const App: React.FC = () => {
                 onToggleLabel={toggleLabel}
                 selectedLanguage={selectedLanguage}
                 onChangeLanguage={setSelectedLanguage}
+                selectedCategories={selectedCategories}
+                onToggleCategory={toggleCategory}
               />
             </div>
           )}
