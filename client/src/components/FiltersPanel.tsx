@@ -7,7 +7,23 @@ type FiltersPanelProps = {
   selectedLanguage: string | null
   onChangeLanguage: (language: string | null) => void
   showTags?: boolean
+  selectedCategories?: string[]
+  onToggleCategory?: (category: string) => void
 }
+
+const ISSUE_CATEGORIES = [
+  { key: 'all', label: 'All Issues', icon: '🔍' },
+  { key: 'good first issue', label: 'Good First Issue', icon: '✨' },
+  { key: 'help wanted', label: 'Help Wanted', icon: '🆘' },
+  { key: 'bug', label: 'Bug', icon: '🐛' },
+  { key: 'enhancement', label: 'Enhancement', icon: '⚡' },
+  { key: 'feature', label: 'Feature', icon: '🚀' },
+  { key: 'documentation', label: 'Documentation', icon: '📝' },
+  { key: 'refactor', label: 'Refactor', icon: '♻️' },
+  { key: 'performance', label: 'Performance', icon: '⚡' },
+  { key: 'testing', label: 'Testing', icon: '🧪' },
+  { key: 'question', label: 'Question', icon: '❓' },
+]
 
 const LANGUAGES = [
   { key: 'javascript', label: 'JavaScript' },
@@ -33,7 +49,16 @@ const LANGUAGES = [
   { key: null as unknown as string, label: 'Any Language' }
 ]
 
-const FiltersPanel: React.FC<FiltersPanelProps> = ({ className = '', selectedLabels, onToggleLabel, selectedLanguage, onChangeLanguage, showTags = true }) => {
+const FiltersPanel: React.FC<FiltersPanelProps> = ({ 
+  className = '', 
+  selectedLabels, 
+  onToggleLabel, 
+  selectedLanguage, 
+  onChangeLanguage, 
+  showTags = true,
+  selectedCategories = [],
+  onToggleCategory
+}) => {
   const [searchLang, setSearchLang] = React.useState('')
 
   const filteredLanguages = React.useMemo(() => {
@@ -48,7 +73,43 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({ className = '', selectedLab
       <div className="p-4">
         <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 uppercase tracking-wide">Filters</h2>
         <div className="space-y-5">
-          {showTags && (
+          {showTags && onToggleCategory && (
+            <div>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Issue Categories</p>
+              <div className="space-y-1 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                {ISSUE_CATEGORIES.map((cat) => {
+                  const active = selectedCategories.includes(cat.key) || (cat.key === 'all' && selectedCategories.length === 0)
+                  return (
+                    <button
+                      key={cat.key}
+                      type="button"
+                      onClick={() => {
+                        if (cat.key === 'all') {
+                          // Clear all categories
+                          selectedCategories.forEach(c => onToggleCategory(c))
+                        } else {
+                          // Toggle this category and remove 'all' if it was selected
+                          if (selectedCategories.includes('all')) {
+                            onToggleCategory('all')
+                          }
+                          onToggleCategory(cat.key)
+                        }
+                      }}
+                      className={`w-full flex items-center gap-2 rounded px-3 py-2 text-xs font-medium text-left transition-colors ${
+                        active 
+                          ? 'bg-slate-700 dark:bg-slate-600 text-white' 
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
+                      }`}
+                    >
+                      <span>{cat.icon}</span>
+                      <span>{cat.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+          {showTags && !onToggleCategory && (
             <div>
               <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Tags</p>
               <div className="flex flex-wrap gap-2">
