@@ -14,22 +14,22 @@ const Footer: React.FC<FooterProps> = ({
   return (
     <footer className="border-t border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 mt-8 transition-colors duration-200">
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <img src="/logo.svg" alt="IssueFinder" className="h-5 w-5" />
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+          <div className="flex-1 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+              <img src="/issuefinder-2.png" alt="IssueFinder" className="h-5 w-5" />
               <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
                 IssueFinder
               </span>
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 max-w-xl mb-2">
+            <p className="text-xs text-gray-600 dark:text-gray-400 max-w-xl mx-auto md:mx-0 mb-2">
               Discover GitHub issues and repositories across all categories - from bug fixes to features, documentation to refactoring. 
               Find the perfect opportunity to start or continue your open source contribution journey.
             </p>
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 italic">
               Developed with the frustration of finding the right issues to contribute to open source by a developer
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center md:justify-start gap-3">
               <a 
                 href={githubUrl} 
                 target="_blank" 
@@ -65,7 +65,7 @@ const Footer: React.FC<FooterProps> = ({
               </a>
             </div>
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-sm text-gray-500 dark:text-gray-400 text-center md:text-right">
             <p>© {new Date().getFullYear()} IssueFinder</p>
             <p className="mt-1">Made with ❤️ for open source contributors</p>
           </div>
