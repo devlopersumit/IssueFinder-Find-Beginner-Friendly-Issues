@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { useFetchIssues } from '../hooks/useFetchIssues'
 import DifficultyBadge from './DifficultyBadge'
 import { detectDifficulty } from '../utils/difficulty'
+import type { NaturalLanguage } from '../utils/languageDetection'
+import { filterByLanguage } from '../utils/languageDetection'
 
 type IssueListProps = {
   className?: string
   query: string
+  naturalLanguageFilter?: NaturalLanguage[]
 }
 
-const IssueList: React.FC<IssueListProps> = ({ className = '', query }) => {
+const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLanguageFilter = [] }) => {
   const [page, setPage] = useState<number>(1)
   const perPage = 20
   const [items, setItems] = useState<any[]>([])
@@ -32,8 +35,17 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query }) => {
     }
   }, [data])
 
+  // Apply natural language filter
+  const filteredItems = useMemo(() => {
+    if (naturalLanguageFilter.length === 0) {
+      return items // Show all if no filter selected
+    }
+    return filterByLanguage(items, naturalLanguageFilter)
+  }, [items, naturalLanguageFilter])
+
   const totalCount = data?.total_count ?? 0
   const canLoadMore = items.length < totalCount && !isLoading && !error
+  const displayItems = filteredItems
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -222,7 +234,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query }) => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Issues</h2>
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            {isLoading && items.length === 0 ? (
+            {isLoading && displayItems.length === 0 ? (
               <span className="flex items-center gap-2">
                 <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -238,7 +250,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query }) => {
           </div>
         </div>
         
-        {items.length === 0 && !isLoading && !error && (
+        {displayItems.length === 0 && !isLoading && !error && (
           <div className="text-center py-8">
             <svg className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -249,8 +261,8 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query }) => {
         )}
 
         <div className="space-y-2">
-          {(items.length ? items : [1, 2, 3]).map((item: any, idx: number) => {
-            if (!items.length) {
+          {(displayItems.length ? displayItems : [1, 2, 3]).map((item: any, idx: number) => {
+            if (!displayItems.length) {
               return (
                 <article key={`placeholder-${idx}`} className="p-4 border border-gray-300 dark:border-gray-700 rounded animate-pulse">
                   <div className="flex items-start justify-between gap-4">
@@ -359,7 +371,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query }) => {
               {isLoading ? 'Loading...' : 'Load More'}
             </button>
           )}
-          {isLoading && items.length > 0 && (
+          {isLoading && displayItems.length > 0 && (
             <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
               <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

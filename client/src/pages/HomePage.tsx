@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import Hero from '../components/Hero'
 import FiltersPanel from '../components/FiltersPanel'
 import IssueList from '../components/IssueList'
@@ -6,6 +6,7 @@ import RepositoryList from '../components/RepositoryList'
 import MobileCategoryTabs from '../components/MobileCategoryTabs'
 import { Link } from 'react-router-dom'
 import { useSearch } from '../contexts/SearchContext'
+import { NaturalLanguage, getBrowserLanguage } from '../utils/languageDetection'
 
 type ViewMode = 'issues' | 'repositories'
 
@@ -15,7 +16,17 @@ const HomePage: React.FC = () => {
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>('javascript')
+  const [selectedNaturalLanguages, setSelectedNaturalLanguages] = useState<NaturalLanguage[]>([])
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false)
+
+  // Auto-detect browser language and set as default filter
+  useEffect(() => {
+    const browserLang = getBrowserLanguage()
+    // Only auto-select if no languages are selected yet (first visit)
+    if (selectedNaturalLanguages.length === 0) {
+      setSelectedNaturalLanguages([browserLang])
+    }
+  }, []) // Run only once on mount
 
   const toggleLabel = (label: string) => {
     setSelectedLabels((prev) => (prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]))
@@ -30,6 +41,15 @@ const HomePage: React.FC = () => {
         return prev.filter((c) => c !== category)
       }
       return [...prev.filter((c) => c !== 'all'), category]
+    })
+  }
+
+  const toggleNaturalLanguage = (language: NaturalLanguage) => {
+    setSelectedNaturalLanguages((prev) => {
+      if (prev.includes(language)) {
+        return prev.filter((l) => l !== language)
+      }
+      return [...prev, language]
     })
   }
 
@@ -138,6 +158,8 @@ const HomePage: React.FC = () => {
               selectedCategories={selectedCategories}
               onToggleCategory={toggleCategory}
               isMobile={true}
+              selectedNaturalLanguages={selectedNaturalLanguages}
+              onToggleNaturalLanguage={toggleNaturalLanguage}
             />
           </div>
         )}
@@ -152,6 +174,8 @@ const HomePage: React.FC = () => {
                 onChangeLanguage={setSelectedLanguage}
                 selectedCategories={selectedCategories}
                 onToggleCategory={toggleCategory}
+                selectedNaturalLanguages={selectedNaturalLanguages}
+                onToggleNaturalLanguage={toggleNaturalLanguage}
               />
             </div>
           )}
@@ -164,12 +188,14 @@ const HomePage: React.FC = () => {
                 selectedLanguage={selectedLanguage}
                 onChangeLanguage={setSelectedLanguage}
                 showTags={false}
+                selectedNaturalLanguages={selectedNaturalLanguages}
+                onToggleNaturalLanguage={toggleNaturalLanguage}
               />
             </div>
           )}
           <div className={viewMode === 'issues' ? 'md:col-span-9' : 'md:col-span-9'}>
             {viewMode === 'issues' ? (
-              <IssueList className="rounded-md" query={query} />
+              <IssueList className="rounded-md" query={query} naturalLanguageFilter={selectedNaturalLanguages} />
             ) : (
               <RepositoryList className="rounded-md" language={selectedLanguage} />
             )}
