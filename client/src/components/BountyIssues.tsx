@@ -35,6 +35,8 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null)
   const [newItemsCount, setNewItemsCount] = useState<number>(0)
   const [repoLanguages, setRepoLanguages] = useState<Record<string, string[]>>({})
+  const [fetchingLanguages, setFetchingLanguages] = useState<Set<string>>(new Set())
+  const [failedLanguages, setFailedLanguages] = useState<Set<string>>(new Set())
   const [rateLimited, setRateLimited] = useState<boolean>(false)
   const abortRef = useRef<AbortController | null>(null)
   const intervalRef = useRef<number | null>(null)
@@ -96,14 +98,14 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         setLastRefreshTime(new Date())
         // Load cached languages immediately
         loadCachedLanguagesForIssues(cachedData)
-        // Fetch languages for cached items in background (with delay and rate limit check)
+        // Fetch languages for cached items in background (with shorter delay and rate limit check)
         if (cachedData.length > 0 && (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current)) {
-          // Delay language fetching to avoid hitting rate limits immediately
+          // Shorter delay to start fetching languages
           setTimeout(() => {
             fetchLanguagesForIssues(cachedData).catch(err => {
               console.warn('Failed to fetch some repository languages:', err)
             })
-          }, 5000) // 5 second delay
+          }, 1000) // 1 second delay
         }
         return
       }
@@ -367,14 +369,14 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         loadCachedLanguagesForIssues(mergedItems)
       }
       
-      // Fetch languages for issues in the background (with longer delay to avoid rate limits)
+      // Fetch languages for issues in the background (with shorter delay to avoid rate limits)
       if (mergedItems.length > 0 && !rateLimitHit && (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current)) {
-        // Delay language fetching significantly to avoid hitting rate limits (10 seconds)
+        // Shorter delay to start fetching languages
         setTimeout(() => {
           fetchLanguagesForIssues(mergedItems).catch(err => {
             console.warn('Failed to fetch some repository languages:', err)
           })
-        }, 10000) // 10 second delay
+        }, 2000) // 2 second delay
       } else {
         console.log('Skipping language fetching due to rate limits')
       }
@@ -415,14 +417,14 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       setLastRefreshTime(new Date())
       // Load cached languages immediately
       loadCachedLanguagesForIssues(cachedData)
-      // Fetch languages for cached items (with delay and rate limit check)
+      // Fetch languages for cached items (with shorter delay and rate limit check)
       if (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current) {
-        // Delay language fetching to avoid hitting rate limits immediately
+        // Shorter delay to start fetching languages
         setTimeout(() => {
           fetchLanguagesForIssues(cachedData).catch(err => {
             console.warn('Failed to fetch some repository languages:', err)
           })
-        }, 5000) // 5 second delay
+        }, 1000) // 1 second delay
       }
     } else {
       setIsLoading(true)
@@ -602,42 +604,78 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       return
     }
 
-    const languageMap: Record<string, string[]> = {}
-    
     // Fetch languages for all unique repositories
     const uniqueRepos = new Set<string>()
     issues.forEach(issue => {
-      if (issue.repository_url) {
+      if (issue.repository_url && !repoLanguages[issue.repository_url] && !failedLanguages.has(issue.repository_url)) {
         uniqueRepos.add(issue.repository_url)
       }
     })
     
-    // Fetch languages with much longer delays to avoid rate limiting
+    if (uniqueRepos.size === 0) {
+      return // All repos already have languages or failed
+    }
+
+    // Mark repos as being fetched
+    setFetchingLanguages(prev => new Set([...prev, ...uniqueRepos]))
+    
+    // Fetch languages with shorter delays and update incrementally
     for (const repoUrl of uniqueRepos) {
       // Check rate limit before each fetch
       if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
         console.log('Stopping language fetching due to rate limit')
+        setFetchingLanguages(prev => {
+          const next = new Set(prev)
+          next.delete(repoUrl)
+          return next
+        })
+        setFailedLanguages(prev => new Set([...prev, repoUrl]))
         break
       }
 
-      if (!languageMap[repoUrl]) {
+      try {
         const languages = await fetchRepositoryLanguages(repoUrl)
         if (languages.length > 0) {
-          languageMap[repoUrl] = languages
+          // Update state immediately for this repo
+          setRepoLanguages(prev => ({ ...prev, [repoUrl]: languages }))
+        } else {
+          // Mark as failed if no languages returned
+          setFailedLanguages(prev => new Set([...prev, repoUrl]))
         }
-        
-        // Check rate limit headers from the last response
-        if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
-          console.log('Rate limited during language fetching')
-          break
-        }
-        
-        // Much longer delay to avoid rate limiting (2 seconds between each repo)
-        await new Promise(resolve => setTimeout(resolve, 2000))
+      } catch (error) {
+        console.warn(`Failed to fetch languages for ${repoUrl}:`, error)
+        setFailedLanguages(prev => new Set([...prev, repoUrl]))
+      }
+      
+      // Remove from fetching set
+      setFetchingLanguages(prev => {
+        const next = new Set(prev)
+        next.delete(repoUrl)
+        return next
+      })
+      
+      // Check rate limit headers from the last response
+      if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
+        console.log('Rate limited during language fetching')
+        // Mark remaining repos as failed
+        uniqueRepos.forEach(url => {
+          if (url !== repoUrl) {
+            setFailedLanguages(prev => new Set([...prev, url]))
+            setFetchingLanguages(prev => {
+              const next = new Set(prev)
+              next.delete(url)
+              return next
+            })
+          }
+        })
+        break
+      }
+      
+      // Shorter delay to avoid rate limiting (500ms between each repo)
+      if (Array.from(uniqueRepos).indexOf(repoUrl) < uniqueRepos.size - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500))
       }
     }
-    
-    setRepoLanguages(prev => ({ ...prev, ...languageMap }))
   }
 
   const getLanguageColor = (language: string): string => {
@@ -1178,30 +1216,28 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
                         <span>•</span>
                         <span>{formatDate(issue.created_at)}</span>
                       </div>
-                      <div className="mt-2.5">
-                        {repoLanguages[issue.repository_url] && repoLanguages[issue.repository_url].length > 0 ? (
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Languages:</span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {repoLanguages[issue.repository_url].slice(0, 3).map((lang, idx) => (
-                                <span
-                                  key={`${issue.id}-lang-${idx}`}
-                                  className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium shadow-sm ${getLanguageColor(lang)}`}
-                                >
-                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                                  </svg>
-                                  {lang}
-                                </span>
-                              ))}
-                            </div>
+                      {repoLanguages[issue.repository_url] && repoLanguages[issue.repository_url].length > 0 ? (
+                        <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Languages:</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {repoLanguages[issue.repository_url].slice(0, 3).map((lang, idx) => (
+                              <span
+                                key={`${issue.id}-lang-${idx}`}
+                                className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium shadow-sm ${getLanguageColor(lang)}`}
+                              >
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                                {lang}
+                              </span>
+                            ))}
                           </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500 dark:text-gray-400 italic">Languages: Loading...</span>
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      ) : fetchingLanguages.has(issue.repository_url) ? (
+                        <div className="mt-2.5 flex items-center gap-2">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 italic">Languages: Loading...</span>
+                        </div>
+                      ) : null}
                       {issue.labels && issue.labels.length > 0 && (
                         <div className="mt-2.5 flex flex-wrap gap-1.5">
                           {issue.labels.slice(0, 5).map((l: any, i: number) => {
