@@ -36,13 +36,13 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
   const [newItemsCount, setNewItemsCount] = useState<number>(0)
   const [repoLanguages, setRepoLanguages] = useState<Record<string, string[]>>({})
   const [fetchingLanguages, setFetchingLanguages] = useState<Set<string>>(new Set())
-  const [failedLanguages, setFailedLanguages] = useState<Set<string>>(new Set())
   const [rateLimited, setRateLimited] = useState<boolean>(false)
   const abortRef = useRef<AbortController | null>(null)
   const intervalRef = useRef<number | null>(null)
   const seenIdsRef = useRef<Set<number>>(new Set())
   const itemsRef = useRef<GithubIssueItem[]>([])
   const rateLimitResetRef = useRef<number | null>(null)
+  const languagesFetchedRef = useRef<Set<string>>(new Set())
 
   // Reduced queries to avoid rate limiting - use only the most effective ones
   const bountyQueries = [
@@ -100,12 +100,10 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         loadCachedLanguagesForIssues(cachedData)
         // Fetch languages for cached items in background (with shorter delay and rate limit check)
         if (cachedData.length > 0 && (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current)) {
-          // Shorter delay to start fetching languages
-          setTimeout(() => {
-            fetchLanguagesForIssues(cachedData).catch(err => {
-              console.warn('Failed to fetch some repository languages:', err)
-            })
-          }, 1000) // 1 second delay
+          // Start fetching languages immediately (no delay)
+          fetchLanguagesForIssues(cachedData).catch(err => {
+            console.warn('Failed to fetch some repository languages:', err)
+          })
         }
         return
       }
@@ -369,14 +367,12 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         loadCachedLanguagesForIssues(mergedItems)
       }
       
-      // Fetch languages for issues in the background (with shorter delay to avoid rate limits)
+      // Fetch languages for issues in the background (start immediately)
       if (mergedItems.length > 0 && !rateLimitHit && (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current)) {
-        // Shorter delay to start fetching languages
-        setTimeout(() => {
-          fetchLanguagesForIssues(mergedItems).catch(err => {
-            console.warn('Failed to fetch some repository languages:', err)
-          })
-        }, 2000) // 2 second delay
+        // Start fetching languages immediately
+        fetchLanguagesForIssues(mergedItems).catch(err => {
+          console.warn('Failed to fetch some repository languages:', err)
+        })
       } else {
         console.log('Skipping language fetching due to rate limits')
       }
@@ -417,14 +413,12 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       setLastRefreshTime(new Date())
       // Load cached languages immediately
       loadCachedLanguagesForIssues(cachedData)
-      // Fetch languages for cached items (with shorter delay and rate limit check)
+      // Fetch languages for cached items (start immediately)
       if (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current) {
-        // Shorter delay to start fetching languages
-        setTimeout(() => {
-          fetchLanguagesForIssues(cachedData).catch(err => {
-            console.warn('Failed to fetch some repository languages:', err)
-          })
-        }, 1000) // 1 second delay
+        // Start fetching languages immediately
+        fetchLanguagesForIssues(cachedData).catch(err => {
+          console.warn('Failed to fetch some repository languages:', err)
+        })
       }
     } else {
       setIsLoading(true)
@@ -498,6 +492,8 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
             const cacheMaxAge = 30 * 60 * 1000 // 30 minutes for languages
             if (cacheAge < cacheMaxAge && Array.isArray(languages) && languages.length > 0) {
               languageMap[issue.repository_url] = languages
+              // Mark as fetched so we don't refetch immediately
+              languagesFetchedRef.current.add(issue.repository_url)
             }
           }
         } catch (err) {
@@ -507,6 +503,7 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     })
     
     if (Object.keys(languageMap).length > 0) {
+      console.log(`Loaded ${Object.keys(languageMap).length} cached language sets`)
       setRepoLanguages(prev => ({ ...prev, ...languageMap }))
     }
   }
@@ -561,6 +558,7 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       }
       
       if (!response.ok) {
+        console.warn(`Failed to fetch languages for ${repoUrl}: ${response.status} ${response.statusText}`)
         return []
       }
 
@@ -604,17 +602,20 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       return
     }
 
-    // Fetch languages for all unique repositories
+    // Fetch languages for all unique repositories that haven't been fetched yet
     const uniqueRepos = new Set<string>()
     issues.forEach(issue => {
-      if (issue.repository_url && !repoLanguages[issue.repository_url] && !failedLanguages.has(issue.repository_url)) {
+      if (issue.repository_url && !languagesFetchedRef.current.has(issue.repository_url)) {
         uniqueRepos.add(issue.repository_url)
       }
     })
     
     if (uniqueRepos.size === 0) {
-      return // All repos already have languages or failed
+      console.log('No new repos to fetch languages for')
+      return // All repos already fetched
     }
+
+    console.log(`Fetching languages for ${uniqueRepos.size} repositories...`)
 
     // Mark repos as being fetched
     setFetchingLanguages(prev => new Set([...prev, ...uniqueRepos]))
@@ -629,22 +630,25 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
           next.delete(repoUrl)
           return next
         })
-        setFailedLanguages(prev => new Set([...prev, repoUrl]))
+        languagesFetchedRef.current.add(repoUrl)
         break
       }
 
       try {
+        console.log(`Fetching languages for: ${repoUrl}`)
         const languages = await fetchRepositoryLanguages(repoUrl)
         if (languages.length > 0) {
+          console.log(`Got languages for ${repoUrl}:`, languages)
           // Update state immediately for this repo
           setRepoLanguages(prev => ({ ...prev, [repoUrl]: languages }))
         } else {
-          // Mark as failed if no languages returned
-          setFailedLanguages(prev => new Set([...prev, repoUrl]))
+          console.log(`No languages found for ${repoUrl}`)
         }
+        // Mark as fetched regardless of result
+        languagesFetchedRef.current.add(repoUrl)
       } catch (error) {
         console.warn(`Failed to fetch languages for ${repoUrl}:`, error)
-        setFailedLanguages(prev => new Set([...prev, repoUrl]))
+        languagesFetchedRef.current.add(repoUrl)
       }
       
       // Remove from fetching set
@@ -657,23 +661,23 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       // Check rate limit headers from the last response
       if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
         console.log('Rate limited during language fetching')
-        // Mark remaining repos as failed
+        // Mark remaining repos as fetched (to stop showing loading)
         uniqueRepos.forEach(url => {
-          if (url !== repoUrl) {
-            setFailedLanguages(prev => new Set([...prev, url]))
+          if (url !== repoUrl && !languagesFetchedRef.current.has(url)) {
             setFetchingLanguages(prev => {
               const next = new Set(prev)
               next.delete(url)
               return next
             })
+            languagesFetchedRef.current.add(url)
           }
         })
         break
       }
       
-      // Shorter delay to avoid rate limiting (500ms between each repo)
+      // Shorter delay to avoid rate limiting (300ms between each repo)
       if (Array.from(uniqueRepos).indexOf(repoUrl) < uniqueRepos.size - 1) {
-        await new Promise(resolve => setTimeout(resolve, 500))
+        await new Promise(resolve => setTimeout(resolve, 300))
       }
     }
   }
