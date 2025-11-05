@@ -4,7 +4,7 @@ import FiltersPanel from '../components/FiltersPanel'
 import IssueList from '../components/IssueList'
 import RepositoryList from '../components/RepositoryList'
 import MobileCategoryTabs from '../components/MobileCategoryTabs'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useSearch } from '../contexts/SearchContext'
 
 type ViewMode = 'issues' | 'repositories'
