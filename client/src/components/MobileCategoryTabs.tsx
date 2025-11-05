@@ -1,17 +1,17 @@
 import React from 'react'
 
 const ISSUE_CATEGORIES = [
-  { key: 'all', label: 'All', icon: '🔍' },
-  { key: 'good first issue', label: 'Good First', icon: '✨' },
-  { key: 'help wanted', label: 'Help Wanted', icon: '🤝' },
-  { key: 'bug', label: 'Bug', icon: '⚠️' },
-  { key: 'enhancement', label: 'Enhancement', icon: '⚡' },
-  { key: 'feature', label: 'Feature', icon: '🚀' },
-  { key: 'documentation', label: 'Docs', icon: '📝' },
-  { key: 'refactor', label: 'Refactor', icon: '♻️' },
-  { key: 'performance', label: 'Performance', icon: '⚙️' },
-  { key: 'testing', label: 'Testing', icon: '🧪' },
-  { key: 'question', label: 'Question', icon: '❓' },
+  { key: 'all', label: 'All' },
+  { key: 'good first issue', label: 'Good First' },
+  { key: 'help wanted', label: 'Help Wanted' },
+  { key: 'bug', label: 'Bug' },
+  { key: 'enhancement', label: 'Enhancement' },
+  { key: 'feature', label: 'Feature' },
+  { key: 'documentation', label: 'Docs' },
+  { key: 'refactor', label: 'Refactor' },
+  { key: 'performance', label: 'Performance' },
+  { key: 'testing', label: 'Testing' },
+  { key: 'question', label: 'Question' },
 ]
 
 type MobileCategoryTabsProps = {
@@ -25,10 +25,10 @@ const MobileCategoryTabs: React.FC<MobileCategoryTabsProps> = ({
 }) => {
   const handleCategoryToggle = (category: string) => {
     if (category === 'all') {
-      // Clear all categories
+      
       selectedCategories.forEach(c => onToggleCategory(c))
     } else {
-      // Toggle this category and remove 'all' if it was selected
+      
       if (selectedCategories.includes('all')) {
         onToggleCategory('all')
       }
@@ -53,7 +53,6 @@ const MobileCategoryTabs: React.FC<MobileCategoryTabsProps> = ({
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
                 }`}
               >
-                <span className="text-sm">{cat.icon}</span>
                 <span>{cat.label}</span>
               </button>
             )

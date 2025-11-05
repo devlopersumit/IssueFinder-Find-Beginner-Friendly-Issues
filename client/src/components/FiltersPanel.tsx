@@ -13,17 +13,17 @@ type FiltersPanelProps = {
 }
 
 const ISSUE_CATEGORIES = [
-  { key: 'all', label: 'All Issues', icon: '🔍' },
-  { key: 'good first issue', label: 'Good First Issue', icon: '✨' },
-  { key: 'help wanted', label: 'Help Wanted', icon: '🤝' },
-  { key: 'bug', label: 'Bug', icon: '⚠️' },
-  { key: 'enhancement', label: 'Enhancement', icon: '⚡' },
-  { key: 'feature', label: 'Feature', icon: '🚀' },
-  { key: 'documentation', label: 'Documentation', icon: '📝' },
-  { key: 'refactor', label: 'Refactor', icon: '♻️' },
-  { key: 'performance', label: 'Performance', icon: '⚙️' },
-  { key: 'testing', label: 'Testing', icon: '🧪' },
-  { key: 'question', label: 'Question', icon: '❓' },
+  { key: 'all', label: 'All Issues' },
+  { key: 'good first issue', label: 'Good First Issue' },
+  { key: 'help wanted', label: 'Help Wanted' },
+  { key: 'bug', label: 'Bug' },
+  { key: 'enhancement', label: 'Enhancement' },
+  { key: 'feature', label: 'Feature' },
+  { key: 'documentation', label: 'Documentation' },
+  { key: 'refactor', label: 'Refactor' },
+  { key: 'performance', label: 'Performance' },
+  { key: 'testing', label: 'Testing' },
+  { key: 'question', label: 'Question' },
 ]
 
 const LANGUAGES = [
@@ -107,7 +107,6 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
                           : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
                       }`}
                     >
-                      <span>{cat.icon}</span>
                       <span>{cat.label}</span>
                     </button>
                   )
