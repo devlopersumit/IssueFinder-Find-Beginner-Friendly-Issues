@@ -47,14 +47,12 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
   const rateLimitResetRef = useRef<number | null>(null)
   const languagesFetchedRef = useRef<Set<string>>(new Set())
 
-  // Reduced queries to avoid rate limiting - use only the most effective ones
   const bountyQueries = [
     'state:open no:assignee label:bounty',
     'state:open no:assignee label:bountysource',
     'state:open no:assignee bounty in:title',
   ]
 
-  // Check cache (5 minutes cache)
   const getCachedData = (): GithubIssueItem[] | null => {
     try {
       const cached = localStorage.getItem('bountyIssuesCache')
@@ -62,20 +60,17 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         const { data, timestamp } = JSON.parse(cached)
         const now = Date.now()
         const cacheAge = now - timestamp
-        const cacheMaxAge = 5 * 60 * 1000 // 5 minutes
+        const cacheMaxAge = 5 * 60 * 1000
         
         if (cacheAge < cacheMaxAge && Array.isArray(data) && data.length > 0) {
-          console.log(`Using cached data (${Math.floor(cacheAge / 1000)}s old)`)
           return data
         }
       }
     } catch (err) {
-      console.warn('Failed to read cache:', err)
     }
     return null
   }
 
-  // Save to cache
   const setCachedData = (data: GithubIssueItem[]) => {
     try {
       const cacheData = {
@@ -84,40 +79,31 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       }
       localStorage.setItem('bountyIssuesCache', JSON.stringify(cacheData))
     } catch (err) {
-      console.warn('Failed to save cache:', err)
     }
   }
 
   const fetchBountyIssues = async (isSilentRefresh: boolean = false, forceRefresh: boolean = false) => {
-    // Check cache first unless forced refresh
     if (!forceRefresh && !isSilentRefresh) {
       const cachedData = getCachedData()
       if (cachedData) {
-        console.log('Loading from cache...')
         setItems(cachedData)
         itemsRef.current = cachedData
         setIsLoading(false)
         setError(null)
         setLastRefreshTime(new Date())
-        // Load cached languages immediately
         loadCachedLanguagesForIssues(cachedData)
-        // Fetch languages for cached items in background (with shorter delay and rate limit check)
         if (cachedData.length > 0 && (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current)) {
-          // Start fetching languages immediately (no delay)
-          fetchLanguagesForIssues(cachedData).catch(err => {
-            console.warn('Failed to fetch some repository languages:', err)
+          fetchLanguagesForIssues(cachedData).catch(() => {
           })
         }
         return
       }
     }
 
-    // Check if we're rate limited
-    if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
-      const waitTime = Math.ceil((rateLimitResetRef.current - Date.now()) / 1000)
-      const errorMsg = `Rate limited. Please wait ${waitTime} seconds before trying again.`
-      console.warn(errorMsg)
-      setError(new Error(errorMsg))
+      if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
+        const waitTime = Math.ceil((rateLimitResetRef.current - Date.now()) / 1000)
+        const errorMsg = `Rate limited. Please wait ${waitTime} seconds before trying again.`
+        setError(new Error(errorMsg))
       setIsLoading(false)
       setIsRefreshing(false)
       return
@@ -144,10 +130,8 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     let rateLimitHit = false
 
     try {
-      // Fetch queries sequentially with longer delays to avoid rate limiting
       for (let i = 0; i < bountyQueries.length; i++) {
         if (rateLimitHit) {
-          console.log('Stopping fetch due to rate limit')
           break
         }
 
@@ -163,7 +147,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
             signal: controller.signal
           })
 
-          // Check rate limit headers
           const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
           const rateLimitReset = response.headers.get('X-RateLimit-Reset')
           
@@ -181,14 +164,12 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
                 }
               })
               successCount++
-              console.log(`Query ${i + 1} succeeded: Found ${json.items.length} issues (total so far: ${allIssues.length})`)
             }
           } else if (response.status === 403) {
-            // Rate limit detected
             rateLimitHit = true
             setRateLimited(true)
             
-            let resetTime = rateLimitResetRef.current || Date.now() + 60000 // Default 1 minute
+            let resetTime = rateLimitResetRef.current || Date.now() + 60000
             if (rateLimitReset) {
               resetTime = parseInt(rateLimitReset) * 1000
               rateLimitResetRef.current = resetTime
@@ -196,12 +177,9 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
             
             const waitSeconds = Math.ceil((resetTime - Date.now()) / 1000)
             const errorMsg = `GitHub API rate limit reached. Please wait ${waitSeconds} seconds or use cached results.`
-            console.error(errorMsg)
             
-            // Try to use cache if available
             const cachedData = getCachedData()
             if (cachedData && cachedData.length > 0) {
-              console.log('Using cached data due to rate limit')
               setItems(cachedData)
               itemsRef.current = cachedData
               setError(new Error(errorMsg))
@@ -209,45 +187,28 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
               setError(new Error(errorMsg))
             }
             break
-          } else {
-            let errorText = ''
-            try {
-              errorText = await response.text()
-            } catch {
-              errorText = 'Unable to read error response'
-            }
-            console.warn(`Query ${i + 1} failed:`, response.status, response.statusText, errorText.substring(0, 100))
           }
 
-          // Check if we're getting close to rate limit
           if (rateLimitRemaining && parseInt(rateLimitRemaining) < 5) {
-            console.warn(`Low rate limit remaining: ${rateLimitRemaining}. Stopping further requests.`)
             break
           }
         } catch (err: unknown) {
           if ((err as any)?.name === 'AbortError') {
-            console.log('Request aborted')
             return
           }
-          console.warn(`Query ${i + 1} error:`, query, err)
         }
 
-        // Longer delay between queries to avoid rate limiting (2 seconds instead of 800ms)
         if (i < bountyQueries.length - 1 && !rateLimitHit) {
           await new Promise(resolve => setTimeout(resolve, 2000))
         }
       }
       
-      console.log(`Fetch completed: ${successCount} successful queries, ${allIssues.length} total issues found`)
 
-      // Filter to ensure only open, unassigned issues (not fixed yet)
       const openUnassignedIssues = allIssues.filter(issue => {
-        // Only include open issues (not closed/fixed)
         if (issue.state !== 'open') {
           return false
         }
         
-        // Exclude issues that have assignees (already assigned to someone)
         if (issue.assignee !== null && issue.assignee !== undefined) {
           return false
         }
@@ -255,7 +216,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
           return false
         }
         
-        // Exclude pull requests (they're not issues)
         if (issue.pull_request) {
           return false
         }
@@ -265,31 +225,19 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         
         return true
       })
-      console.log(`Filtered ${allIssues.length} issues to ${openUnassignedIssues.length} open/unassigned issues`)
 
-      // Filter to only include actual bounty issues with enhanced validation
-      // First do quick content check (synchronous)
       const potentialBountyIssues = openUnassignedIssues.filter(issue => hasBountyDetails(issue))
-      console.log(`Quick filtered ${openUnassignedIssues.length} issues to ${potentialBountyIssues.length} potential bounty issues`)
       
-      // Then verify each issue with repository checks (async, with rate limiting)
-      // Skip repository validation if rate limited or if we have many issues
       const shouldSkipRepoValidation = rateLimitHit || rateLimitResetRef.current && Date.now() < rateLimitResetRef.current
       
       let verifiedBountyIssues: GithubIssueItem[] = []
       
       if (shouldSkipRepoValidation) {
-        console.log('Skipping repository validation due to rate limits - using content-based filtering only')
-        // Just use content-based filtering if rate limited
         verifiedBountyIssues = potentialBountyIssues
       } else {
-        // Process in smaller batches with longer delays to avoid rate limiting
-        const batchSize = 2 // Reduced batch size
+        const batchSize = 2
         for (let i = 0; i < potentialBountyIssues.length; i += batchSize) {
-          // Check rate limit before each batch
           if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
-            console.log('Stopping repository validation due to rate limit')
-            // Add remaining issues without validation
             verifiedBountyIssues.push(...potentialBountyIssues.slice(i))
             break
           }
@@ -306,93 +254,65 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
           
           verifiedBountyIssues.push(...validIssues)
           
-          // Longer delay between batches to avoid rate limiting (2 seconds)
           if (i + batchSize < potentialBountyIssues.length) {
             await new Promise(resolve => setTimeout(resolve, 2000))
           }
         }
       }
-      
-      console.log(`Enhanced validation filtered ${potentialBountyIssues.length} potential issues to ${verifiedBountyIssues.length} verified legitimate bounty issues`)
 
-      // Only show error if ALL queries failed
       if (successCount === 0 && verifiedBountyIssues.length === 0 && !isSilentRefresh) {
         const errorMsg = 'Unable to fetch bounty issues. This might be due to rate limiting or network issues. Please try again in a moment.'
-        console.error('All queries failed:', errorMsg)
         setError(new Error(errorMsg))
       } else {
-        // Clear any previous errors if we got results (even if some queries failed)
         setError(null)
         if (verifiedBountyIssues.length > 0) {
-          console.log(`✅ Successfully loaded ${verifiedBountyIssues.length} bounty issues from ${successCount} queries`)
-        } else if (successCount > 0) {
-          console.log(`⚠️ Queries succeeded but no bounty issues found`)
         }
       }
 
-      // Sort by creation date (newest first)
       verifiedBountyIssues.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       
-      // Update seen IDs with verified issues
       verifiedBountyIssues.forEach(issue => {
         seenIdsRef.current.add(issue.id)
       })
 
-      // Detect new items
       const existingIds = new Set(itemsRef.current.map(item => item.id))
       const newItems = verifiedBountyIssues.filter(issue => !existingIds.has(issue.id))
       
       if (newItems.length > 0 && isSilentRefresh) {
         setNewItemsCount(newItems.length)
-        // Reset new items count after 5 seconds
         setTimeout(() => setNewItemsCount(0), 5000)
       }
 
-      // Merge new items with existing ones (only verified bounty issues)
-      // First, verify existing items are still valid bounty issues (quick check only for existing items)
       const verifiedExistingItems = itemsRef.current.filter(issue => hasBountyDetails(issue))
       
-      // Merge and sort
       const mergedItems = [...newItems, ...verifiedExistingItems]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 30)
       
       itemsRef.current = mergedItems
       
-      // Set items first
       setItems(mergedItems)
       setLastRefreshTime(new Date())
       
-      // Cache the results
       if (mergedItems.length > 0) {
         setCachedData(mergedItems)
-        // Load cached languages immediately
         loadCachedLanguagesForIssues(mergedItems)
       }
       
-      // Fetch languages for issues in the background (start immediately)
       if (mergedItems.length > 0 && !rateLimitHit && (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current)) {
-        // Start fetching languages immediately
-        fetchLanguagesForIssues(mergedItems).catch(err => {
-          console.warn('Failed to fetch some repository languages:', err)
-        })
-      } else {
-        console.log('Skipping language fetching due to rate limits')
-      }
+          fetchLanguagesForIssues(mergedItems).catch(() => {
+          })
+        }
       
-      // Only stop loading after all items are processed and set
       setTimeout(() => {
         setIsLoading(false)
         setIsRefreshing(false)
-        console.log(`✅ All bounty issues processed and displayed: ${mergedItems.length} issues`)
       }, 300)
     } catch (err: unknown) {
       if ((err as any)?.name === 'AbortError') return
-      // Only set error if we have no items at all
       if (itemsRef.current.length === 0) {
         setError(err as Error)
       }
-      // Stop loading even on error
       setTimeout(() => {
         setIsLoading(false)
         setIsRefreshing(false)
@@ -400,61 +320,44 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     }
   }
 
-  // Auto-detect browser language and set as default filter
   useEffect(() => {
     const browserLang = getBrowserLanguage()
-    // Only auto-select if no languages are selected yet (first visit)
     if (selectedNaturalLanguages.length === 0) {
       setSelectedNaturalLanguages([browserLang])
     }
-  }, []) // Run only once on mount
+  }, [])
 
-  // Apply natural language filter
   const filteredItems = useMemo(() => {
     if (selectedNaturalLanguages.length === 0) {
-      return items // Show all if no filter selected
+      return items
     }
     return filterByLanguage(items, selectedNaturalLanguages)
   }, [items, selectedNaturalLanguages])
 
-  // Initial fetch and setup polling - use cache if available
   useEffect(() => {
-    // Reset state to ensure fresh data on mount
-    console.log('🔄 Component mounted: Checking cache and fetching bounty issues...')
     setError(null)
 
-    // Try cache first, then fetch if needed
     const cachedData = getCachedData()
     if (cachedData && cachedData.length > 0) {
-      console.log('📦 Loading from cache on mount...')
       setItems(cachedData)
       itemsRef.current = cachedData
       setIsLoading(false)
       setLastRefreshTime(new Date())
-      // Load cached languages immediately
       loadCachedLanguagesForIssues(cachedData)
-      // Fetch languages for cached items (start immediately)
       if (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current) {
-        // Start fetching languages immediately
-        fetchLanguagesForIssues(cachedData).catch(err => {
-          console.warn('Failed to fetch some repository languages:', err)
+        fetchLanguagesForIssues(cachedData).catch(() => {
         })
       }
     } else {
       setIsLoading(true)
-      console.log('📡 No cache found, fetching bounty issues...')
       fetchBountyIssues(false)
     }
 
-    // Poll less frequently - every 10 minutes (600000ms) instead of 2 minutes to avoid rate limits
     intervalRef.current = setInterval(() => {
-      // Only refresh if not rate limited
       if (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current) {
         fetchBountyIssues(true)
-      } else {
-        console.log('Skipping refresh due to rate limit')
       }
-    }, 600000) // 10 minutes
+    }, 600000)
 
     return () => {
       if (abortRef.current) {
@@ -465,10 +368,9 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Empty dependency array - only run on mount
+  }, [])
 
   const handleManualRefresh = () => {
-    // Force refresh bypasses cache
     fetchBountyIssues(false, true)
   }
 
@@ -497,7 +399,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     return `opened ${Math.floor(diffDays / 30)} months ago`
   }
 
-  // Load cached languages for issues immediately (synchronous)
   const loadCachedLanguagesForIssues = (issues: GithubIssueItem[]) => {
     const languageMap: Record<string, string[]> = {}
     
@@ -509,45 +410,38 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
           if (cached) {
             const { languages, timestamp } = JSON.parse(cached)
             const cacheAge = Date.now() - timestamp
-            const cacheMaxAge = 30 * 60 * 1000 // 30 minutes for languages
+            const cacheMaxAge = 30 * 60 * 1000
             if (cacheAge < cacheMaxAge && Array.isArray(languages) && languages.length > 0) {
               languageMap[issue.repository_url] = languages
-              // Mark as fetched so we don't refetch immediately
               languagesFetchedRef.current.add(issue.repository_url)
             }
           }
         } catch (err) {
-          // Ignore cache errors
         }
       }
     })
     
     if (Object.keys(languageMap).length > 0) {
-      console.log(`Loaded ${Object.keys(languageMap).length} cached language sets`)
       setRepoLanguages(prev => ({ ...prev, ...languageMap }))
     }
   }
 
   const fetchRepositoryLanguages = async (repoUrl: string): Promise<string[]> => {
-    // Check cache first
     try {
       const cacheKey = `repoLanguages_${repoUrl}`
       const cached = localStorage.getItem(cacheKey)
       if (cached) {
         const { languages, timestamp } = JSON.parse(cached)
         const cacheAge = Date.now() - timestamp
-        const cacheMaxAge = 30 * 60 * 1000 // 30 minutes for languages
+        const cacheMaxAge = 30 * 60 * 1000
         if (cacheAge < cacheMaxAge && Array.isArray(languages)) {
           return languages
         }
       }
     } catch (err) {
-      // Ignore cache errors
     }
 
     try {
-      // Extract owner and repo from repository_url
-      // Format: https://api.github.com/repos/owner/repo
       const parts = repoUrl.replace('https://api.github.com/repos/', '').split('/')
       if (parts.length < 2) return []
       
@@ -561,8 +455,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         }
       })
       
-      // Check rate limit headers
-      const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
       const rateLimitReset = response.headers.get('X-RateLimit-Reset')
       
       if (rateLimitReset) {
@@ -570,7 +462,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       }
       
       if (response.status === 403) {
-        console.warn('Rate limited when fetching languages')
         if (rateLimitReset) {
           rateLimitResetRef.current = parseInt(rateLimitReset) * 1000
         }
@@ -578,24 +469,16 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       }
       
       if (!response.ok) {
-        console.warn(`Failed to fetch languages for ${repoUrl}: ${response.status} ${response.statusText}`)
         return []
-      }
-
-      // Check if we're getting close to rate limit
-      if (rateLimitRemaining && parseInt(rateLimitRemaining) < 3) {
-        console.warn(`Very low rate limit remaining when fetching languages: ${rateLimitRemaining}`)
       }
       
       const languages: Record<string, number> = await response.json()
       
-      // Get top 3 languages by bytes
       const sortedLanguages = Object.entries(languages)
         .sort(([, a], [, b]) => b - a)
         .slice(0, 3)
         .map(([lang]) => lang)
       
-      // Cache the result
       if (sortedLanguages.length > 0) {
         try {
           const cacheKey = `repoLanguages_${repoUrl}`
@@ -604,25 +487,20 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
             timestamp: Date.now()
           }))
         } catch (err) {
-          // Ignore cache errors
         }
       }
       
       return sortedLanguages
     } catch (error) {
-      console.warn(`Failed to fetch languages for ${repoUrl}:`, error)
       return []
     }
   }
 
   const fetchLanguagesForIssues = async (issues: GithubIssueItem[]) => {
-    // Check if rate limited - skip language fetching if rate limited
     if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
-      console.log('Skipping language fetching due to rate limit')
       return
     }
 
-    // Fetch languages for all unique repositories that haven't been fetched yet
     const uniqueRepos = new Set<string>()
     issues.forEach(issue => {
       if (issue.repository_url && !languagesFetchedRef.current.has(issue.repository_url)) {
@@ -631,20 +509,13 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     })
     
     if (uniqueRepos.size === 0) {
-      console.log('No new repos to fetch languages for')
-      return // All repos already fetched
+      return
     }
 
-    console.log(`Fetching languages for ${uniqueRepos.size} repositories...`)
-
-    // Mark repos as being fetched
     setFetchingLanguages(prev => new Set([...prev, ...uniqueRepos]))
     
-    // Fetch languages with shorter delays and update incrementally
     for (const repoUrl of uniqueRepos) {
-      // Check rate limit before each fetch
       if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
-        console.log('Stopping language fetching due to rate limit')
         setFetchingLanguages(prev => {
           const next = new Set(prev)
           next.delete(repoUrl)
@@ -655,33 +526,22 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       }
 
       try {
-        console.log(`Fetching languages for: ${repoUrl}`)
         const languages = await fetchRepositoryLanguages(repoUrl)
         if (languages.length > 0) {
-          console.log(`Got languages for ${repoUrl}:`, languages)
-          // Update state immediately for this repo
           setRepoLanguages(prev => ({ ...prev, [repoUrl]: languages }))
-        } else {
-          console.log(`No languages found for ${repoUrl}`)
         }
-        // Mark as fetched regardless of result
         languagesFetchedRef.current.add(repoUrl)
       } catch (error) {
-        console.warn(`Failed to fetch languages for ${repoUrl}:`, error)
         languagesFetchedRef.current.add(repoUrl)
       }
       
-      // Remove from fetching set
       setFetchingLanguages(prev => {
         const next = new Set(prev)
         next.delete(repoUrl)
         return next
       })
       
-      // Check rate limit headers from the last response
       if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
-        console.log('Rate limited during language fetching')
-        // Mark remaining repos as fetched (to stop showing loading)
         uniqueRepos.forEach(url => {
           if (url !== repoUrl && !languagesFetchedRef.current.has(url)) {
             setFetchingLanguages(prev => {
@@ -695,7 +555,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         break
       }
       
-      // Shorter delay to avoid rate limiting (300ms between each repo)
       if (Array.from(uniqueRepos).indexOf(repoUrl) < uniqueRepos.size - 1) {
         await new Promise(resolve => setTimeout(resolve, 300))
       }
@@ -732,7 +591,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
   const getLabelIcon = (labelName: string) => {
     const labelLower = labelName.toLowerCase()
     
-    // Bug labels
     if (labelLower.includes('bug') || labelLower.includes('error')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -741,7 +599,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       )
     }
     
-    // Feature/Enhancement labels
     if (labelLower.includes('feature') || labelLower.includes('enhancement') || labelLower.includes('improvement')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -750,7 +607,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       )
     }
     
-    // Documentation labels
     if (labelLower.includes('doc') || labelLower.includes('documentation') || labelLower.includes('wiki')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -759,7 +615,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       )
     }
     
-    // Refactor labels
     if (labelLower.includes('refactor') || labelLower.includes('cleanup') || labelLower.includes('code quality')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -768,7 +623,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       )
     }
     
-    // Performance labels
     if (labelLower.includes('performance') || labelLower.includes('optimization') || labelLower.includes('speed')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -777,7 +631,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       )
     }
     
-    // Testing labels
     if (labelLower.includes('test') || labelLower.includes('qa') || labelLower.includes('coverage')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -786,7 +639,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       )
     }
     
-    // Question labels
     if (labelLower.includes('question') || labelLower.includes('discussion') || labelLower.includes('help')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -795,7 +647,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       )
     }
     
-    // Good first issue / Beginner labels
     if (labelLower.includes('good first issue') || labelLower.includes('beginner') || labelLower.includes('first-timers-only') || labelLower.includes('starter')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -804,7 +655,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       )
     }
     
-    // Help wanted labels
     if (labelLower.includes('help wanted') || labelLower.includes('contributions welcome')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -813,7 +663,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       )
     }
     
-    // Security labels
     if (labelLower.includes('security') || labelLower.includes('vulnerability') || labelLower.includes('cve')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -822,7 +671,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       )
     }
     
-    // UI/UX labels
     if (labelLower.includes('ui') || labelLower.includes('ux') || labelLower.includes('design') || labelLower.includes('frontend')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -831,7 +679,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       )
     }
     
-    // Backend/API labels
     if (labelLower.includes('backend') || labelLower.includes('api') || labelLower.includes('server')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -840,7 +687,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       )
     }
     
-    // Default: return null for no icon
     return null
   }
 
@@ -853,28 +699,23 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     })
   }
 
-  // Check if repository is legitimate (not spam/fake) - with caching
   const isLegitimateRepository = async (repoUrl: string): Promise<boolean> => {
-    // Check cache first
     try {
       const cacheKey = `repoValidation_${repoUrl}`
       const cached = localStorage.getItem(cacheKey)
       if (cached) {
         const { isValid, timestamp } = JSON.parse(cached)
         const cacheAge = Date.now() - timestamp
-        const cacheMaxAge = 24 * 60 * 60 * 1000 // 24 hours for repo validation
+        const cacheMaxAge = 24 * 60 * 60 * 1000
         if (cacheAge < cacheMaxAge && typeof isValid === 'boolean') {
           return isValid
         }
       }
     } catch (err) {
-      // Ignore cache errors
     }
 
-    // Check if we're rate limited - skip validation if rate limited
     if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
-      console.log(`Skipping repository validation for ${repoUrl} due to rate limit`)
-      return true // Assume valid if rate limited to avoid blocking legitimate issues
+      return true
     }
 
     try {
@@ -891,8 +732,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         }
       })
       
-      // Check rate limit headers
-      const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
       const rateLimitReset = response.headers.get('X-RateLimit-Reset')
       
       if (rateLimitReset) {
@@ -900,16 +739,13 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       }
 
       if (response.status === 403) {
-        // Rate limited - assume valid to avoid blocking issues
         if (rateLimitReset) {
           rateLimitResetRef.current = parseInt(rateLimitReset) * 1000
         }
-        console.warn(`Rate limited when validating ${repoUrl}, assuming valid`)
         return true
       }
       
       if (!response.ok) {
-        // Cache negative result
         try {
           const cacheKey = `repoValidation_${repoUrl}`
           localStorage.setItem(cacheKey, JSON.stringify({
@@ -917,14 +753,12 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
             timestamp: Date.now()
           }))
         } catch (err) {
-          // Ignore cache errors
         }
         return false
       }
       
       const repoData = await response.json()
       
-      // Check for legitimate repository indicators
       const hasStars = repoData.stargazers_count > 0
       const hasForks = repoData.forks_count > 0
       const hasDescription = repoData.description && repoData.description.length > 10
@@ -938,7 +772,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       
       const isValid = isNotTooNew && (hasStars || hasForks || hasDescription) && hasActivity
 
-      // Cache the result
       try {
         const cacheKey = `repoValidation_${repoUrl}`
         localStorage.setItem(cacheKey, JSON.stringify({
@@ -946,29 +779,19 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
           timestamp: Date.now()
         }))
       } catch (err) {
-        // Ignore cache errors
       }
 
-      // Check if we're getting close to rate limit
-      if (rateLimitRemaining && parseInt(rateLimitRemaining) < 3) {
-        console.warn(`Very low rate limit remaining: ${rateLimitRemaining}`)
-      }
-      
       return isValid
     } catch (error) {
-      console.warn(`Failed to verify repository ${repoUrl}:`, error)
-      // Don't cache errors - try again next time
-      return true // Assume valid on error to avoid blocking legitimate issues
+      return true
     }
   }
 
-  // Check if issue has actual bounty details (not just keywords)
   const hasBountyDetails = (issue: GithubIssueItem): boolean => {
     const title = (issue.title || '').toLowerCase()
     const body = (issue.body || '').toLowerCase()
     const combinedText = `${title} ${body}`
     
-    // Must have bounty keyword
     const bountyKeywords = [
       'bounty', 'bountysource', 'issuehunt', 'bounties',
       'cash prize', 'cash reward', 'monetary reward',
@@ -980,60 +803,48 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     const hasBountyKeyword = bountyKeywords.some(keyword => combinedText.includes(keyword))
     if (!hasBountyKeyword) return false
     
-    // Check for actual monetary value indicators
     const monetaryIndicators = [
-      /\$\d+/, // $100, $50
+      /\$\d+/,
       /\d+\s*(usd|dollar|dollars|eur|euro|euros|gbp|pound|pounds|btc|bitcoin)/i,
       /(reward|prize|bounty|payment).*?\$\d+/i,
       /(reward|prize|bounty|payment).*?\d+.*?(usd|dollar|btc)/i,
-      /(bountysource|issuehunt|codefund)/i, // Known bounty platforms
+      /(bountysource|issuehunt|codefund)/i,
     ]
     
     const hasMonetaryValue = monetaryIndicators.some(pattern => pattern.test(combinedText))
     
-    // Check for minimum content quality
     const hasMinimumContent = body.length > 50 || title.length > 20
     
-    // Check for spam patterns (too many exclamation marks, all caps, etc.)
     const spamPatterns = [
-      /!{3,}/, // Multiple exclamation marks
-      /[A-Z]{20,}/, // Too many caps in a row
-      /(click|free|urgent|limited time|act now)/i, // Common spam words
+      /!{3,}/,
+      /[A-Z]{20,}/,
+      /(click|free|urgent|limited time|act now)/i,
     ]
     
     const hasSpamPatterns = spamPatterns.some(pattern => pattern.test(combinedText))
     
-    // Check for known bounty platforms (these are more trustworthy)
     const knownPlatforms = /(bountysource\.com|issuehunt\.io|codefund\.io)/i.test(combinedText)
     
-    // Must have: bounty keyword + (monetary value OR known platform OR minimum content) + no spam patterns
     return hasBountyKeyword && (hasMonetaryValue || knownPlatforms || hasMinimumContent) && !hasSpamPatterns
   }
 
-  // Verify if an issue is actually a bounty issue with enhanced validation
   const isBountyIssue = async (issue: GithubIssueItem): Promise<boolean> => {
-    // Quick check: must have bounty-related content
     if (!hasBountyDetails(issue)) {
       return false
     }
     
-    // Check if we should skip repository validation (rate limited)
     const shouldSkipRepoCheck = rateLimitResetRef.current && Date.now() < rateLimitResetRef.current
-    
-    // Check labels for bounty indicators
+
     if (hasBountyLabel(issue.labels || [])) {
-      // If it has a bounty label, verify repository is legitimate (if not rate limited)
       if (!shouldSkipRepoCheck) {
         const isLegit = await isLegitimateRepository(issue.repository_url)
         if (!isLegit) {
-          console.log(`Filtered out issue ${issue.id} - repository not legitimate`)
           return false
         }
       }
       return true
     }
 
-    // Check title and body for bounty keywords with details
     const titleLower = (issue.title || '').toLowerCase()
     const bodyLower = (issue.body || '').toLowerCase()
     const combinedText = `${titleLower} ${bodyLower}`
@@ -1049,16 +860,13 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     const hasBountyKeyword = bountyKeywords.some(keyword => combinedText.includes(keyword))
     
     if (hasBountyKeyword) {
-      // Verify repository is legitimate before accepting (if not rate limited)
       if (!shouldSkipRepoCheck) {
         const isLegit = await isLegitimateRepository(issue.repository_url)
         if (!isLegit) {
-          console.log(`Filtered out issue ${issue.id} - repository not legitimate`)
           return false
         }
       }
       
-      // Additional check: must have some substance (not just keyword spam)
       const hasSubstance = bodyLower.length > 100 || 
         /(fix|implement|add|create|build|develop)/i.test(combinedText)
       

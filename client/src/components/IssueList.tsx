@@ -36,13 +36,11 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
         return merged
       })
       
-      // Fetch languages for new repositories
       const newRepos = data.items
         .filter(item => item.repository_url && !languagesFetchedRef.current.has(item.repository_url))
         .map(item => item.repository_url)
       
       if (newRepos.length > 0) {
-        // Fetch languages for unique repos
         const uniqueRepos = Array.from(new Set(newRepos))
         uniqueRepos.forEach(async (repoUrl) => {
           if (!languagesFetchedRef.current.has(repoUrl)) {
@@ -57,10 +55,9 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
     }
   }, [data])
 
-  // Apply natural language filter
   const filteredItems = useMemo(() => {
     if (naturalLanguageFilter.length === 0) {
-      return items // Show all if no filter selected
+      return items
     }
     return filterByLanguage(items, naturalLanguageFilter)
   }, [items, naturalLanguageFilter])
@@ -85,7 +82,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
   const getLabelIcon = (labelName: string) => {
     const labelLower = labelName.toLowerCase()
     
-    // Bug labels
     if (labelLower.includes('bug') || labelLower.includes('error')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -94,7 +90,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // Feature/Enhancement labels
     if (labelLower.includes('feature') || labelLower.includes('enhancement') || labelLower.includes('improvement')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -103,7 +98,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // Documentation labels
     if (labelLower.includes('doc') || labelLower.includes('documentation') || labelLower.includes('wiki')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -112,7 +106,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // Refactor labels
     if (labelLower.includes('refactor') || labelLower.includes('cleanup') || labelLower.includes('code quality')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -121,7 +114,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // Performance labels
     if (labelLower.includes('performance') || labelLower.includes('optimization') || labelLower.includes('speed')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -130,7 +122,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // Testing labels
     if (labelLower.includes('test') || labelLower.includes('qa') || labelLower.includes('coverage')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -139,7 +130,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // Question labels
     if (labelLower.includes('question') || labelLower.includes('discussion') || labelLower.includes('help')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -148,7 +138,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // Good first issue / Beginner labels
     if (labelLower.includes('good first issue') || labelLower.includes('beginner') || labelLower.includes('first-timers-only') || labelLower.includes('starter')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -157,7 +146,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // Help wanted labels
     if (labelLower.includes('help wanted') || labelLower.includes('contributions welcome')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -166,7 +154,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // Security labels
     if (labelLower.includes('security') || labelLower.includes('vulnerability') || labelLower.includes('cve')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -175,7 +162,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // UI/UX labels
     if (labelLower.includes('ui') || labelLower.includes('ux') || labelLower.includes('design') || labelLower.includes('frontend')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -184,7 +170,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // Backend/API labels
     if (labelLower.includes('backend') || labelLower.includes('api') || labelLower.includes('server')) {
       return (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -193,7 +178,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // Default: return null for no icon
     return null
   }
 
@@ -206,10 +190,8 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
 
-    // Check labels in priority order
     const labelNames = labels.map(l => l.name?.toLowerCase() || '')
     
-    // Priority order for main icon
     if (labelNames.some(l => l.includes('bug') || l.includes('error'))) {
       return (
         <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -242,7 +224,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       )
     }
     
-    // Default icon
     return (
       <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />

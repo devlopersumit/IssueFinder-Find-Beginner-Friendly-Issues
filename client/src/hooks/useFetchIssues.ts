@@ -56,10 +56,6 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
 
         const json: GithubSearchResponse = await response.json()
         setData(json)
-
-        // Log to console for the exercise goal
-        // eslint-disable-next-line no-console
-        console.log('[IssueFinder] GitHub search response:', json)
       } catch (err: unknown) {
         if ((err as any)?.name === 'AbortError') return
         setError(err as Error)

@@ -64,7 +64,6 @@ export function useFetchRepositoryDetails(repoFullName: string | null): UseFetch
       setIsLoading(true)
       setError(null)
       try {
-        // Fetch repository details
         const repoUrl = `https://api.github.com/repos/${repoFullName}`
         const repoResponse = await fetch(repoUrl, {
           method: 'GET',
@@ -80,7 +79,6 @@ export function useFetchRepositoryDetails(repoFullName: string | null): UseFetch
         const repoData: RepositoryDetails = await repoResponse.json()
         setRepository(repoData)
 
-        // Fetch good-first-issue issues
         setIsLoadingIssues(true)
         const issuesUrl = `https://api.github.com/search/issues?q=repo:${repoFullName}+label:"good first issue"+state:open&sort=created&order=desc&per_page=10`
         const issuesResponse = await fetch(issuesUrl, {
@@ -95,7 +93,6 @@ export function useFetchRepositoryDetails(repoFullName: string | null): UseFetch
           setGoodFirstIssues(issuesData.items || [])
         }
       } catch (err: unknown) {
-        console.error('Error fetching repository details:', err)
         setError(err as Error)
       } finally {
         setIsLoading(false)

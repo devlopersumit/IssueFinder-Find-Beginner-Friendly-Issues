@@ -45,26 +45,19 @@ const HomePage: React.FC = () => {
 
   const query = useMemo(() => {
     const parts: string[] = []
-    // Use submitted search from global context if available
     if (submittedSearch) parts.push(submittedSearch)
     parts.push('state:open')
-    parts.push('no:assignee') // Only unassigned issues
+    parts.push('no:assignee')
     
-    // Handle categories - if 'all' is selected or no category selected, show all
     if (selectedCategories.length > 0 && !selectedCategories.includes('all')) {
-      // Build OR query for multiple categories
-      // GitHub API format: label:"bug" OR label:"feature"
       const categoryQueries = selectedCategories.map((cat) => `label:"${cat}"`)
       if (categoryQueries.length === 1) {
         parts.push(categoryQueries[0])
       } else if (categoryQueries.length > 1) {
-        // Use OR for multiple labels
         parts.push(`(${categoryQueries.join(' OR ')})`)
       }
     }
-    // If 'all' is selected or nothing selected, don't filter by category
     
-    // Legacy label support (backward compatibility) - add these as additional filters
     if (selectedLabels.length > 0) {
       selectedLabels.forEach((l) => parts.push(`label:"${l}"`))
     }

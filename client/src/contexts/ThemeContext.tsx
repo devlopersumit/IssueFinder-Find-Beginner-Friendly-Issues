@@ -69,10 +69,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         root.setAttribute('data-theme', 'light')
       }
       
-      console.log('Theme toggled to:', newTheme)
-      console.log('HTML element classes:', root.className)
-      console.log('HTML element has dark class:', root.classList.contains('dark'))
-      
       try {
         localStorage.setItem('theme', newTheme)
       } catch (e) {

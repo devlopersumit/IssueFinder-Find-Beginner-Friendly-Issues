@@ -48,15 +48,12 @@ export function useSearchRepository(searchQuery: string | null): UseSearchReposi
       setIsLoading(true)
       setError(null)
       try {
-        // Check if it's in owner/repo format
         const ownerRepoMatch = trimmedQuery.match(/^([a-zA-Z0-9._-]+)\/([a-zA-Z0-9._-]+)$/)
         
         let url: string
         if (ownerRepoMatch) {
-          // Direct repository search
           url = `https://api.github.com/search/repositories?q=${encodeURIComponent(trimmedQuery)}+in:name&sort=stars&order=desc&per_page=10`
         } else {
-          // General repository search
           url = `https://api.github.com/search/repositories?q=${encodeURIComponent(trimmedQuery)}+in:name&sort=stars&order=desc&per_page=10`
         }
 
@@ -74,7 +71,6 @@ export function useSearchRepository(searchQuery: string | null): UseSearchReposi
         const data: SearchRepositoriesResponse = await response.json()
         setResults(data.items || [])
       } catch (err: unknown) {
-        console.error('Error searching repositories:', err)
         setError(err as Error)
         setResults([])
       } finally {
@@ -84,10 +80,9 @@ export function useSearchRepository(searchQuery: string | null): UseSearchReposi
 
     const timeoutId = setTimeout(() => {
       searchRepository()
-    }, 500) // Debounce search
+    }, 500)
 
     return () => clearTimeout(timeoutId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery])
 
   return { results, isLoading, error }

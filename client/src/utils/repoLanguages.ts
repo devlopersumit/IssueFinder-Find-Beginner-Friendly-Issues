@@ -1,12 +1,5 @@
-/**
- * Utility functions for fetching and managing repository programming languages
- */
-
 export type RepoLanguages = Record<string, string[]>
 
-/**
- * Get color classes for a programming language badge
- */
 export function getLanguageColor(language: string): string {
   const colors: Record<string, string> = {
     'JavaScript': 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700',
@@ -34,29 +27,22 @@ export function getLanguageColor(language: string): string {
   return colors[language] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-600'
 }
 
-/**
- * Fetch repository languages from GitHub API
- */
 export async function fetchRepositoryLanguages(repoUrl: string): Promise<string[]> {
-  // Check cache first (30 minutes cache)
   try {
     const cacheKey = `repoLanguages_${repoUrl}`
     const cached = localStorage.getItem(cacheKey)
     if (cached) {
       const { languages, timestamp } = JSON.parse(cached)
       const cacheAge = Date.now() - timestamp
-      const cacheMaxAge = 30 * 60 * 1000 // 30 minutes
+      const cacheMaxAge = 30 * 60 * 1000
       if (cacheAge < cacheMaxAge && Array.isArray(languages)) {
         return languages
       }
     }
-  } catch (err) {
-    // Ignore cache errors
-  }
+    } catch (err) {
+    }
 
   try {
-    // Extract owner and repo from repository_url
-    // Format: https://api.github.com/repos/owner/repo
     const parts = repoUrl.replace('https://api.github.com/repos/', '').split('/')
     if (parts.length < 2) return []
     
@@ -71,21 +57,16 @@ export async function fetchRepositoryLanguages(repoUrl: string): Promise<string[
     })
     
     if (!response.ok) {
-      if (response.status === 403) {
-        console.warn('Rate limited when fetching languages')
-      }
       return []
     }
 
     const languages: Record<string, number> = await response.json()
     
-    // Get top 3 languages by bytes
     const sortedLanguages = Object.entries(languages)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
-      .map(([lang]) => lang)
+        .map(([lang]) => lang)
     
-    // Cache the result
     if (sortedLanguages.length > 0) {
       try {
         const cacheKey = `repoLanguages_${repoUrl}`
@@ -94,13 +75,11 @@ export async function fetchRepositoryLanguages(repoUrl: string): Promise<string[
           timestamp: Date.now()
         }))
       } catch (err) {
-        // Ignore cache errors
       }
     }
     
     return sortedLanguages
   } catch (error) {
-    console.warn(`Failed to fetch languages for ${repoUrl}:`, error)
     return []
   }
 }

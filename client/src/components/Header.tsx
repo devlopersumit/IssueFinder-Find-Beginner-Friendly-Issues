@@ -44,13 +44,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'IssueFinder', searchTerm, onSe
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              console.log('Button clicked, current theme:', theme)
               toggleTheme()
-              // Force check after toggle
-              setTimeout(() => {
-                console.log('After toggle, HTML has dark class:', document.documentElement.classList.contains('dark'))
-                console.log('Current theme from state:', theme)
-              }, 100)
             }}
             className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
             aria-label="Toggle theme"

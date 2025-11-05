@@ -52,26 +52,18 @@ export function useFetchRepositories(
       setIsLoading(true)
       setError(null)
       try {
-        // Search for repositories that are good for beginners
-        // Focus on quality repos that are likely to have beginner-friendly issues
         let queryParts: string[] = []
         
-        // Add language filter if selected
         if (language) {
           queryParts.push(`language:${language}`)
         }
         
-        // Add quality filters - ensure minimum engagement
         queryParts.push('forks:>=10')
         queryParts.push('stars:>=50')
-        queryParts.push('archived:false') // Only active repos
+        queryParts.push('archived:false')
         
-        // Join with spaces - encodeURIComponent will handle URL encoding
         const query = queryParts.join(' ')
         const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&sort=${sort}&order=desc&page=${page}&per_page=${perPage}`
-        
-        console.log('Fetching repositories with query:', query)
-        console.log('Full URL:', url)
 
         const response = await fetch(url, {
           method: 'GET',
@@ -82,8 +74,6 @@ export function useFetchRepositories(
         })
 
         if (!response.ok) {
-          const errorText = await response.text()
-          console.error('GitHub API error:', response.status, response.statusText, errorText)
           throw new Error(`GitHub API error: ${response.status} ${response.statusText}`)
         }
 
@@ -91,7 +81,6 @@ export function useFetchRepositories(
         setData(json)
       } catch (err: unknown) {
         if ((err as any)?.name === 'AbortError') return
-        console.error('Error fetching repositories:', err)
         setError(err as Error)
       } finally {
         setIsLoading(false)
