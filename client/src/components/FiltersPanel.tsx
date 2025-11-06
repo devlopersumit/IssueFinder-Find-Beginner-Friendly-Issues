@@ -10,6 +10,7 @@ type FiltersPanelProps = {
   selectedCategories?: string[]
   onToggleCategory?: (category: string) => void
   isMobile?: boolean
+
   // Advanced filters
   selectedDifficulty?: string | null
   onChangeDifficulty?: (difficulty: string | null) => void
@@ -21,7 +22,7 @@ type FiltersPanelProps = {
   onChangeLastActivity?: (activity: string | null) => void
 }
 
-// Simplified categories - most commonly used
+// Simplified categories 
 const ISSUE_CATEGORIES = [
   { key: 'all', label: 'All Issues' },
   { key: 'good first issue', label: 'Good First Issue' },
@@ -85,8 +86,8 @@ const LAST_ACTIVITY_OPTIONS = [
 
 const FiltersPanel: React.FC<FiltersPanelProps> = ({ 
   className = '', 
-  selectedLabels, 
-  onToggleLabel, 
+  selectedLabels: _selectedLabels, 
+  onToggleLabel: _onToggleLabel, 
   selectedLanguage, 
   onChangeLanguage, 
   showTags = true,
