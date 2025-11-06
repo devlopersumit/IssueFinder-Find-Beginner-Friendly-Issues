@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom'
 import { useSearch } from '../contexts/SearchContext'
 import type { NaturalLanguage } from '../utils/languageDetection'
 import { getBrowserLanguage } from '../utils/languageDetection'
+import { buildGitHubQuery } from '../utils/queryBuilder'
 
 type ViewMode = 'issues' | 'repositories'
 
@@ -16,9 +17,14 @@ const HomePage: React.FC = () => {
   const { submittedSearch } = useSearch()
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [selectedLanguage, setSelectedLanguage] = useState<string | null>('javascript')
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
   const [selectedNaturalLanguages, setSelectedNaturalLanguages] = useState<NaturalLanguage[]>([])
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false)
+  // Advanced filters
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null)
+  const [selectedType, setSelectedType] = useState<string | null>(null)
+  const [selectedFramework, setSelectedFramework] = useState<string | null>(null)
+  const [selectedLastActivity, setSelectedLastActivity] = useState<string | null>(null)
 
   // Auto-detect browser language and apply filter automatically (silently)
   useEffect(() => {
@@ -44,27 +50,17 @@ const HomePage: React.FC = () => {
 
 
   const query = useMemo(() => {
-    const parts: string[] = []
-    if (submittedSearch) parts.push(submittedSearch)
-    parts.push('state:open')
-    parts.push('no:assignee')
-    
-    if (selectedCategories.length > 0 && !selectedCategories.includes('all')) {
-      const categoryQueries = selectedCategories.map((cat) => `label:"${cat}"`)
-      if (categoryQueries.length === 1) {
-        parts.push(categoryQueries[0])
-      } else if (categoryQueries.length > 1) {
-        parts.push(`(${categoryQueries.join(' OR ')})`)
-      }
-    }
-    
-    if (selectedLabels.length > 0) {
-      selectedLabels.forEach((l) => parts.push(`label:"${l}"`))
-    }
-    
-    if (selectedLanguage) parts.push(`language:${selectedLanguage}`)
-    return parts.join(' ')
-  }, [submittedSearch, selectedLabels, selectedCategories, selectedLanguage])
+    return buildGitHubQuery({
+      searchTerm: submittedSearch || undefined,
+      selectedLabels,
+      selectedCategories,
+      selectedLanguage,
+      selectedDifficulty,
+      selectedType,
+      selectedFramework,
+      selectedLastActivity,
+    })
+  }, [submittedSearch, selectedLabels, selectedCategories, selectedLanguage, selectedDifficulty, selectedType, selectedFramework, selectedLastActivity])
 
   return (
     <>
@@ -141,6 +137,14 @@ const HomePage: React.FC = () => {
               selectedCategories={selectedCategories}
               onToggleCategory={toggleCategory}
               isMobile={true}
+              selectedDifficulty={selectedDifficulty}
+              onChangeDifficulty={setSelectedDifficulty}
+              selectedType={selectedType}
+              onChangeType={setSelectedType}
+              selectedFramework={selectedFramework}
+              onChangeFramework={setSelectedFramework}
+              selectedLastActivity={selectedLastActivity}
+              onChangeLastActivity={setSelectedLastActivity}
             />
           </div>
         )}
@@ -155,6 +159,14 @@ const HomePage: React.FC = () => {
                 onChangeLanguage={setSelectedLanguage}
                 selectedCategories={selectedCategories}
                 onToggleCategory={toggleCategory}
+                selectedDifficulty={selectedDifficulty}
+                onChangeDifficulty={setSelectedDifficulty}
+                selectedType={selectedType}
+                onChangeType={setSelectedType}
+                selectedFramework={selectedFramework}
+                onChangeFramework={setSelectedFramework}
+                selectedLastActivity={selectedLastActivity}
+                onChangeLastActivity={setSelectedLastActivity}
               />
             </div>
           )}

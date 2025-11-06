@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSearch } from '../contexts/SearchContext'
 import IssueList from '../components/IssueList'
 import FiltersPanel from '../components/FiltersPanel'
-import { useState } from 'react'
+import { buildGitHubQuery } from '../utils/queryBuilder'
 
 const SearchResultsPage: React.FC = () => {
   const { submittedSearch, clearSearch } = useSearch()
@@ -11,6 +11,11 @@ const SearchResultsPage: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false)
+  // Advanced filters
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null)
+  const [selectedType, setSelectedType] = useState<string | null>(null)
+  const [selectedFramework, setSelectedFramework] = useState<string | null>(null)
+  const [selectedLastActivity, setSelectedLastActivity] = useState<string | null>(null)
 
   const toggleLabel = (label: string) => {
     setSelectedLabels((prev) => (prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]))
@@ -29,37 +34,17 @@ const SearchResultsPage: React.FC = () => {
   }
 
   const query = useMemo(() => {
-    const parts: string[] = []
-    
-    // Add search term if provided
-    if (submittedSearch) {
-      parts.push(submittedSearch)
-    }
-    
-    parts.push('state:open')
-    parts.push('no:assignee') // Only unassigned issues
-    
-    // Handle categories
-    if (selectedCategories.length > 0 && !selectedCategories.includes('all')) {
-      const categoryQueries = selectedCategories.map((cat) => `label:"${cat}"`)
-      if (categoryQueries.length === 1) {
-        parts.push(categoryQueries[0])
-      } else if (categoryQueries.length > 1) {
-        parts.push(`(${categoryQueries.join(' OR ')})`)
-      }
-    }
-    
-    // Legacy label support
-    if (selectedLabels.length > 0) {
-      selectedLabels.forEach((l) => parts.push(`label:"${l}"`))
-    }
-    
-    if (selectedLanguage) {
-      parts.push(`language:${selectedLanguage}`)
-    }
-    
-    return parts.join(' ')
-  }, [submittedSearch, selectedLabels, selectedCategories, selectedLanguage])
+    return buildGitHubQuery({
+      searchTerm: submittedSearch || undefined,
+      selectedLabels,
+      selectedCategories,
+      selectedLanguage,
+      selectedDifficulty,
+      selectedType,
+      selectedFramework,
+      selectedLastActivity,
+    })
+  }, [submittedSearch, selectedLabels, selectedCategories, selectedLanguage, selectedDifficulty, selectedType, selectedFramework, selectedLastActivity])
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
@@ -118,6 +103,14 @@ const SearchResultsPage: React.FC = () => {
             selectedCategories={selectedCategories}
             onToggleCategory={toggleCategory}
             isMobile={true}
+            selectedDifficulty={selectedDifficulty}
+            onChangeDifficulty={setSelectedDifficulty}
+            selectedType={selectedType}
+            onChangeType={setSelectedType}
+            selectedFramework={selectedFramework}
+            onChangeFramework={setSelectedFramework}
+            selectedLastActivity={selectedLastActivity}
+            onChangeLastActivity={setSelectedLastActivity}
           />
         </div>
       )}
@@ -132,6 +125,14 @@ const SearchResultsPage: React.FC = () => {
             onChangeLanguage={setSelectedLanguage}
             selectedCategories={selectedCategories}
             onToggleCategory={toggleCategory}
+            selectedDifficulty={selectedDifficulty}
+            onChangeDifficulty={setSelectedDifficulty}
+            selectedType={selectedType}
+            onChangeType={setSelectedType}
+            selectedFramework={selectedFramework}
+            onChangeFramework={setSelectedFramework}
+            selectedLastActivity={selectedLastActivity}
+            onChangeLastActivity={setSelectedLastActivity}
           />
         </div>
         <div className="md:col-span-9">

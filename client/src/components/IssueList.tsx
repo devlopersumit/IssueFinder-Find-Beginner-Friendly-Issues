@@ -246,7 +246,16 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
                 Loading…
               </span>
             ) : error ? (
-              <span className="text-red-600 dark:text-red-400">Error loading issues</span>
+              <div className="flex flex-col gap-1">
+                <span className="text-red-600 dark:text-red-400">Error loading issues</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 max-w-md">
+                  {error.message.includes('rate limit') 
+                    ? 'GitHub API rate limit reached. Please wait a few minutes and try again.'
+                    : error.message.includes('forbidden')
+                    ? 'GitHub API access issue. Try simplifying your filters or wait a moment.'
+                    : error.message}
+                </span>
+              </div>
             ) : (
               <span className="font-medium">{totalCount.toLocaleString()} {totalCount === 1 ? 'result' : 'results'}</span>
             )}

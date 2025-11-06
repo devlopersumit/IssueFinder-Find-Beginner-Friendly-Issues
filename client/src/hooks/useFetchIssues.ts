@@ -40,7 +40,20 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
       setIsLoading(true)
       setError(null)
       try {
+        // Don't fetch if query is empty
+        if (!query || query.trim() === '') {
+          setData({ total_count: 0, incomplete_results: false, items: [] })
+          setIsLoading(false)
+          return
+        }
+
         const url = `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`
+
+        // Debug: log the query being used (always log for debugging)
+        console.log('=== GitHub API Request ===')
+        console.log('Query:', query)
+        console.log('URL:', url)
+        console.log('Page:', page, 'Per Page:', perPage)
 
         const response = await fetch(url, {
           method: 'GET',
@@ -51,14 +64,48 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
         })
 
         if (!response.ok) {
+          const errorText = await response.text()
+          console.error('GitHub API Error:', response.status, response.statusText, errorText)
+          
+          // Handle rate limiting (403) with better error message
+          if (response.status === 403) {
+            const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
+            const rateLimitReset = response.headers.get('X-RateLimit-Reset')
+            
+            if (rateLimitRemaining === '0') {
+              const resetTime = rateLimitReset ? new Date(parseInt(rateLimitReset) * 1000).toLocaleTimeString() : 'soon'
+              throw new Error(`GitHub API rate limit exceeded. Please try again after ${resetTime}.`)
+            } else {
+              throw new Error(`GitHub API access forbidden. This might be due to rate limiting or query complexity. Try simplifying your filters.`)
+            }
+          }
+          
           throw new Error(`GitHub API error: ${response.status} ${response.statusText}`)
         }
 
         const json: GithubSearchResponse = await response.json()
+        
+        // Debug: log results (always log for debugging)
+        console.log('=== GitHub API Response ===')
+        console.log('Total count:', json.total_count, 'issues found')
+        console.log('Incomplete results:', json.incomplete_results)
+        console.log('Items returned:', json.items?.length || 0)
+        if (json.total_count === 0) {
+          console.warn('⚠️ No issues found with the current query')
+          console.log('Query used:', query)
+        } else {
+          console.log('✓ Issues found - query is working')
+        }
+        console.log('==========================')
+        
         setData(json)
       } catch (err: unknown) {
         if ((err as any)?.name === 'AbortError') return
-        setError(err as Error)
+        const error = err as Error
+        console.error('Error fetching issues:', error)
+        setError(error)
+        // Set empty data on error so UI shows error state
+        setData({ total_count: 0, incomplete_results: false, items: [] })
       } finally {
         setIsLoading(false)
       }
