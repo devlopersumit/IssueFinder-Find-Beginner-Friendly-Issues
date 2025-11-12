@@ -1,11 +1,15 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react'
 import DifficultyBadge from './DifficultyBadge'
 import { detectDifficulty } from '../utils/difficulty'
-import type { NaturalLanguage } from '../utils/languageDetection'
-import { getBrowserLanguage, filterByLanguage } from '../utils/languageDetection'
+import type { LocationFilter } from '../utils/locationDetection'
+import { filterByLocation } from '../utils/locationDetection'
+import type { Currency } from '../utils/currencyDetection'
+import { filterByCurrency } from '../utils/currencyDetection'
 
 type BountyIssuesProps = {
   className?: string
+  currencyFilter?: Currency | null
+  locationFilter?: LocationFilter | null
 }
 
 type GithubIssueItem = {
@@ -29,7 +33,11 @@ type GithubSearchResponse = {
   items: GithubIssueItem[]
 }
 
-const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
+const BountyIssues: React.FC<BountyIssuesProps> = ({ 
+  className = '',
+  currencyFilter = null,
+  locationFilter = null
+}) => {
   const [items, setItems] = useState<GithubIssueItem[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
@@ -39,7 +47,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
   const [repoLanguages, setRepoLanguages] = useState<Record<string, string[]>>({})
   const [fetchingLanguages, setFetchingLanguages] = useState<Set<string>>(new Set())
   const [rateLimited, setRateLimited] = useState<boolean>(false)
-  const [selectedNaturalLanguages, setSelectedNaturalLanguages] = useState<NaturalLanguage[]>([])
   const abortRef = useRef<AbortController | null>(null)
   const intervalRef = useRef<number | null>(null)
   const seenIdsRef = useRef<Set<number>>(new Set())
@@ -320,19 +327,21 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     }
   }
 
-  useEffect(() => {
-    const browserLang = getBrowserLanguage()
-    if (selectedNaturalLanguages.length === 0) {
-      setSelectedNaturalLanguages([browserLang])
-    }
-  }, [])
-
   const filteredItems = useMemo(() => {
-    if (selectedNaturalLanguages.length === 0) {
-      return items
+    let filtered = items
+    
+    // Apply location filter
+    if (locationFilter) {
+      filtered = filterByLocation(filtered, locationFilter)
     }
-    return filterByLanguage(items, selectedNaturalLanguages)
-  }, [items, selectedNaturalLanguages])
+    
+    // Apply currency filter
+    if (currencyFilter) {
+      filtered = filterByCurrency(filtered, currencyFilter)
+    }
+    
+    return filtered
+  }, [items, locationFilter, currencyFilter])
 
   useEffect(() => {
     setError(null)
@@ -1009,9 +1018,9 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
             <svg className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
-            <h3 className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-100">No issues match your language filter</h3>
+            <h3 className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-100">No issues match your filters</h3>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Try selecting different languages or clearing the filter
+              Try adjusting your location or currency filters
             </p>
           </div>
         )}

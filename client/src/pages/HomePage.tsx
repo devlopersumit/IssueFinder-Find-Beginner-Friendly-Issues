@@ -6,8 +6,8 @@ import RepositoryList from '../components/RepositoryList'
 import MobileCategoryTabs from '../components/MobileCategoryTabs'
 import { Link } from 'react-router-dom'
 import { useSearch } from '../contexts/SearchContext'
+import { useFilterPreferences } from '../contexts/FilterPreferencesContext'
 import type { NaturalLanguage } from '../utils/languageDetection'
-import { getBrowserLanguage } from '../utils/languageDetection'
 import { buildGitHubQuery } from '../utils/queryBuilder'
 
 type ViewMode = 'issues' | 'repositories'
@@ -15,23 +15,32 @@ type ViewMode = 'issues' | 'repositories'
 const HomePage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('issues')
   const { submittedSearch } = useSearch()
+  const { 
+    preferences, 
+    updateNaturalLanguages, 
+    updateLocation,
+    updateSelectedLanguage,
+    updateSelectedDifficulty,
+    updateSelectedType,
+    updateSelectedFramework,
+    updateSelectedLastActivity,
+    updateSelectedLicense,
+    isDetectingLocation
+  } = useFilterPreferences()
+  
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
-  const [selectedLicense, setSelectedLicense] = useState<string | null>(null)
-  const [selectedNaturalLanguages, setSelectedNaturalLanguages] = useState<NaturalLanguage[]>([])
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false)
-  // Advanced filters
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null)
-  const [selectedType, setSelectedType] = useState<string | null>(null)
-  const [selectedFramework, setSelectedFramework] = useState<string | null>(null)
-  const [selectedLastActivity, setSelectedLastActivity] = useState<string | null>(null)
 
-  // Auto-detect browser language and apply filter automatically (silently)
-  useEffect(() => {
-    const browserLang = getBrowserLanguage()
-    setSelectedNaturalLanguages([browserLang])
-  }, []) // Run only once on mount
+  // Use preferences from context
+  const selectedLanguage = preferences.selectedLanguage
+  const selectedLicense = preferences.selectedLicense
+  const selectedNaturalLanguages = preferences.naturalLanguages
+  const selectedLocation = preferences.location
+  const selectedDifficulty = preferences.selectedDifficulty
+  const selectedType = preferences.selectedType
+  const selectedFramework = preferences.selectedFramework
+  const selectedLastActivity = preferences.selectedLastActivity
 
   const toggleLabel = (label: string) => {
     setSelectedLabels((prev) => (prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]))
@@ -55,12 +64,12 @@ const HomePage: React.FC = () => {
       searchTerm: submittedSearch || undefined,
       selectedLabels,
       selectedCategories,
-      selectedLanguage,
-      selectedLicense,
-      selectedDifficulty,
-      selectedType,
-      selectedFramework,
-      selectedLastActivity,
+      selectedLanguage: selectedLanguage,
+      selectedLicense: selectedLicense,
+      selectedDifficulty: selectedDifficulty,
+      selectedType: selectedType,
+      selectedFramework: selectedFramework,
+      selectedLastActivity: selectedLastActivity,
     })
   }, [submittedSearch, selectedLabels, selectedCategories, selectedLanguage, selectedLicense, selectedDifficulty, selectedType, selectedFramework, selectedLastActivity])
 
@@ -68,6 +77,17 @@ const HomePage: React.FC = () => {
     <>
       <Hero />
       <main id="catalog" className="mx-auto max-w-7xl px-4 py-8">
+        {/* Show loading indicator when detecting location */}
+        {isDetectingLocation && (
+          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+            <div className="flex items-center gap-2">
+              <svg className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Auto-detecting your location to configure filters...</span>
+            </div>
+          </div>
+        )}
         <section className="mb-10 rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-xs dark:border-gray-800 dark:bg-gray-900">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="space-y-2 max-w-2xl">
@@ -155,21 +175,23 @@ const HomePage: React.FC = () => {
               selectedLabels={selectedLabels}
               onToggleLabel={toggleLabel}
               selectedLanguage={selectedLanguage}
-              onChangeLanguage={setSelectedLanguage}
+              onChangeLanguage={updateSelectedLanguage}
               selectedLicense={viewMode === 'repositories' ? selectedLicense : null}
-              onChangeLicense={viewMode === 'repositories' ? setSelectedLicense : undefined}
+              onChangeLicense={viewMode === 'repositories' ? updateSelectedLicense : undefined}
               showTags={viewMode === 'issues'}
               selectedCategories={selectedCategories}
               onToggleCategory={toggleCategory}
               isMobile={true}
               selectedDifficulty={selectedDifficulty}
-              onChangeDifficulty={setSelectedDifficulty}
+              onChangeDifficulty={updateSelectedDifficulty}
               selectedType={selectedType}
-              onChangeType={setSelectedType}
+              onChangeType={updateSelectedType}
               selectedFramework={selectedFramework}
-              onChangeFramework={setSelectedFramework}
+              onChangeFramework={updateSelectedFramework}
               selectedLastActivity={selectedLastActivity}
-              onChangeLastActivity={setSelectedLastActivity}
+              onChangeLastActivity={updateSelectedLastActivity}
+              selectedLocation={viewMode === 'issues' ? selectedLocation : null}
+              onChangeLocation={viewMode === 'issues' ? updateLocation : undefined}
             />
           </div>
         )}
@@ -181,17 +203,19 @@ const HomePage: React.FC = () => {
                 selectedLabels={selectedLabels}
                 onToggleLabel={toggleLabel}
                 selectedLanguage={selectedLanguage}
-                onChangeLanguage={setSelectedLanguage}
+                onChangeLanguage={updateSelectedLanguage}
                 selectedCategories={selectedCategories}
                 onToggleCategory={toggleCategory}
                 selectedDifficulty={selectedDifficulty}
-                onChangeDifficulty={setSelectedDifficulty}
+                onChangeDifficulty={updateSelectedDifficulty}
                 selectedType={selectedType}
-                onChangeType={setSelectedType}
+                onChangeType={updateSelectedType}
                 selectedFramework={selectedFramework}
-                onChangeFramework={setSelectedFramework}
+                onChangeFramework={updateSelectedFramework}
                 selectedLastActivity={selectedLastActivity}
-                onChangeLastActivity={setSelectedLastActivity}
+                onChangeLastActivity={updateSelectedLastActivity}
+                selectedLocation={selectedLocation}
+                onChangeLocation={updateLocation}
               />
             </div>
           )}
@@ -202,16 +226,21 @@ const HomePage: React.FC = () => {
                 selectedLabels={[]}
                 onToggleLabel={() => {}}
                 selectedLanguage={selectedLanguage}
-                onChangeLanguage={setSelectedLanguage}
+                onChangeLanguage={updateSelectedLanguage}
                 selectedLicense={selectedLicense}
-                onChangeLicense={setSelectedLicense}
+                onChangeLicense={updateSelectedLicense}
                 showTags={false}
               />
             </div>
           )}
           <div className={viewMode === 'issues' ? 'md:col-span-9' : 'md:col-span-9'}>
             {viewMode === 'issues' ? (
-              <IssueList className="rounded-md" query={query} naturalLanguageFilter={selectedNaturalLanguages} />
+              <IssueList 
+                className="rounded-md" 
+                query={query} 
+                naturalLanguageFilter={selectedNaturalLanguages}
+                locationFilter={selectedLocation}
+              />
             ) : (
             <RepositoryList className="rounded-md" language={selectedLanguage} license={selectedLicense} />
             )}

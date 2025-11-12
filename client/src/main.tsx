@@ -5,14 +5,17 @@ import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { SearchProvider } from './contexts/SearchContext'
+import { FilterPreferencesProvider } from './contexts/FilterPreferencesContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <SearchProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <FilterPreferencesProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </FilterPreferencesProvider>
       </SearchProvider>
     </ThemeProvider>
   </StrictMode>,

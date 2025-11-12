@@ -4,15 +4,18 @@ import DifficultyBadge from './DifficultyBadge'
 import { detectDifficulty } from '../utils/difficulty'
 import type { NaturalLanguage } from '../utils/languageDetection'
 import { filterByLanguage } from '../utils/languageDetection'
+import type { LocationFilter } from '../utils/locationDetection'
+import { filterByLocation } from '../utils/locationDetection'
 import { fetchRepositoryLanguages } from '../utils/repoLanguages'
 
 type IssueListProps = {
   className?: string
   query: string
   naturalLanguageFilter?: NaturalLanguage[]
+  locationFilter?: LocationFilter | null
 }
 
-const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLanguageFilter = [] }) => {
+const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLanguageFilter = [], locationFilter = null }) => {
   const [page, setPage] = useState<number>(1)
   const perPage = 20
   const [items, setItems] = useState<any[]>([])
@@ -53,11 +56,20 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
   }, [data])
 
   const filteredItems = useMemo(() => {
-    if (naturalLanguageFilter.length === 0) {
-      return items
+    let filtered = items
+    
+    // Apply language filter
+    if (naturalLanguageFilter.length > 0) {
+      filtered = filterByLanguage(filtered, naturalLanguageFilter)
     }
-    return filterByLanguage(items, naturalLanguageFilter)
-  }, [items, naturalLanguageFilter])
+    
+    // Apply location filter
+    if (locationFilter) {
+      filtered = filterByLocation(filtered, locationFilter)
+    }
+    
+    return filtered
+  }, [items, naturalLanguageFilter, locationFilter])
 
   const totalCount = data?.total_count ?? 0
   const totalPages = Math.max(1, Math.ceil(totalCount / perPage))
