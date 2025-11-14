@@ -11,7 +11,7 @@ type FiltersPanelProps = {
   onToggleCategory?: (category: string) => void
   isMobile?: boolean
 
-  // Advanced filters
+  
   selectedDifficulty?: string | null
   onChangeDifficulty?: (difficulty: string | null) => void
   selectedType?: string | null
@@ -24,7 +24,7 @@ type FiltersPanelProps = {
   onChangeLicense?: (license: string | null) => void
 }
 
-// Simplified categories 
+
 const ISSUE_CATEGORIES = [
   { key: 'all', label: 'All Issues' },
   { key: 'good first issue', label: 'Good First Issue' },
@@ -130,13 +130,13 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
   onChangeLicense,
 }) => {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    difficulty: true,
+    difficulty: false,
     type: false,
     category: false,
     language: false,
     framework: false,
     activity: false,
-    tags: true,
+    tags: false,
     license: false,
   })
 
