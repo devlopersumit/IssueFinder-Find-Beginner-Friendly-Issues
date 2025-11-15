@@ -174,7 +174,6 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
       parts.push('-label:"help wanted"')
       parts.push('-label:"help-wanted"')
       // Don't add other filters for advanced - keep it simple
-      console.log('Advanced filter: Using hardcoded query structure')
     } else {
       // For beginner and intermediate, use normal logic
       if (difficultyConfig.include.length > 0) {
@@ -250,42 +249,6 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
   
   const query = parts.join(' ')
   
-  // Debug: Log the query when difficulty filter is used (always log for debugging)
-  if (params.selectedDifficulty) {
-    console.log('=== Difficulty Filter Debug ===')
-    console.log('Selected difficulty:', params.selectedDifficulty)
-    const difficultyConfig = getDifficultyLabels(params.selectedDifficulty)
-    console.log('Include labels:', difficultyConfig.include)
-    console.log('Exclude labels:', difficultyConfig.exclude)
-    console.log('Query parts:', parts)
-    console.log('Final query:', query)
-    console.log('Encoded URL:', `https://api.github.com/search/issues?q=${encodeURIComponent(query)}`)
-    
-    // For advanced, verify the query includes the label requirement
-    if (params.selectedDifficulty === 'advanced') {
-      const hasAdvancedLabel = query.includes('label:"expert"') || 
-                               query.includes('label:"advanced"') || 
-                               query.includes('label:"hard"') || 
-                               query.includes('label:"difficult"') ||
-                               query.includes('label:"complex"') ||
-                               query.includes('label:"challenging"')
-      console.log('Advanced label check:', hasAdvancedLabel ? '✓ Query includes advanced labels' : '✗ Query missing advanced labels!')
-      if (!hasAdvancedLabel) {
-        console.error('ERROR: Advanced filter query does not include any advanced labels!')
-        console.error('This should not happen - the query should include advanced labels')
-      }
-      
-      // Also verify the query structure is correct
-      const hasOrGroup = query.includes('(label:') && query.includes(' OR ')
-      console.log('OR group check:', hasOrGroup ? '✓ Query has OR group' : '✗ Query missing OR group')
-      
-      // Verify excludes are present
-      const hasExcludes = query.includes('-label:"good first issue"') || query.includes('-label:"help wanted"')
-      console.log('Excludes check:', hasExcludes ? '✓ Query has excludes' : '✗ Query missing excludes')
-    }
-    console.log('==============================')
-  }
-  
   // If query is too restrictive (only base filters), add a default to show issues
   // This ensures we always show some results, but only if no other filters are applied
   const hasAnyFilter = params.selectedDifficulty || 
@@ -309,7 +272,6 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
   if (params.selectedDifficulty === 'advanced') {
     // For advanced, ALWAYS use the hardcoded query to ensure it works
     const advancedQuery = 'state:open type:issue no:assignee (label:"expert" OR label:"advanced" OR label:"hard" OR label:"difficult" OR label:"complex" OR label:"challenging") -label:"good first issue" -label:"good-first-issue" -label:"first-timers-only" -label:"help wanted" -label:"help-wanted"'
-    console.log('Advanced filter: Using guaranteed query:', advancedQuery)
     return advancedQuery
   }
   
