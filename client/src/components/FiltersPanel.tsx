@@ -193,14 +193,32 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
     (selectedCategories && selectedCategories.length > 0 && !selectedCategories.includes('all')) ||
     (selectedLabels && selectedLabels.length > 0)
 
+  const activeFilterCount = [
+    selectedDifficulty ? 1 : 0,
+    selectedType ? 1 : 0,
+    selectedFramework ? 1 : 0,
+    selectedLastActivity ? 1 : 0,
+    selectedLanguage ? 1 : 0,
+    (onChangeLicense && selectedLicense) ? 1 : 0,
+    (selectedCategories && selectedCategories.length > 0 && !selectedCategories.includes('all')) ? selectedCategories.length : 0,
+    (selectedLabels && selectedLabels.length > 0) ? selectedLabels.length : 0,
+  ].reduce((sum, count) => sum + count, 0)
+
   return (
     <aside className={`rounded-2xl border border-slate-200 bg-white/95 shadow-sm transition-colors duration-200 dark:border-gray-700 dark:bg-gray-900 ${className}`}>
       <div className="p-5 sm:p-6">
-        <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-gray-100">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
-          Filters
+        <h2 className="mb-4 flex items-center justify-between text-base font-semibold text-gray-900 dark:text-gray-100">
+          <span className="flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Filters
+          </span>
+          {activeFilterCount > 0 && (
+            <span className="inline-flex items-center justify-center rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-white dark:bg-slate-100 dark:text-slate-900">
+              {activeFilterCount}
+            </span>
+          )}
         </h2>
 
         <div className="space-y-5">
