@@ -40,6 +40,9 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
   const [fetchingLanguages, setFetchingLanguages] = useState<Set<string>>(new Set())
   const [rateLimited, setRateLimited] = useState<boolean>(false)
   const [selectedNaturalLanguages, setSelectedNaturalLanguages] = useState<NaturalLanguage[]>([])
+  const [page, setPage] = useState<number>(1)
+  const [totalCount, setTotalCount] = useState<number>(0)
+  const perPage = 20
   const abortRef = useRef<AbortController | null>(null)
   const intervalRef = useRef<number | null>(null)
   const seenIdsRef = useRef<Set<number>>(new Set())
@@ -47,10 +50,16 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
   const rateLimitResetRef = useRef<number | null>(null)
   const languagesFetchedRef = useRef<Set<string>>(new Set())
 
+  // Only fetch issues with real bounty labels - these indicate actual bounties
   const bountyQueries = [
     'state:open no:assignee label:bounty',
     'state:open no:assignee label:bountysource',
-    'state:open no:assignee bounty in:title',
+    'state:open no:assignee label:"funded"',
+    'state:open no:assignee label:"sponsor"',
+    'state:open no:assignee label:"paid"',
+    'state:open no:assignee label:"issuehunt"',
+    'state:open no:assignee label:"bounty-ready"',
+    'state:open no:assignee label:"cash-prize"',
   ]
 
   const getCachedData = (): GithubIssueItem[] | null => {
@@ -82,8 +91,9 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     }
   }
 
-  const fetchBountyIssues = async (isSilentRefresh: boolean = false, forceRefresh: boolean = false) => {
-    if (!forceRefresh && !isSilentRefresh) {
+  const fetchBountyIssues = async (isSilentRefresh: boolean = false, forceRefresh: boolean = false, pageNum: number = 1) => {
+    // Only use cache on initial load, not for pagination
+    if (!forceRefresh && !isSilentRefresh && pageNum === 1) {
       const cachedData = getCachedData()
       if (cachedData) {
         setItems(cachedData)
@@ -136,70 +146,97 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         }
 
         const query = bountyQueries[i]
+        const itemsPerPage = 100 // GitHub API max per page
+        const maxPagesPerQuery = 10 // GitHub API max is 1000 results = 10 pages
+        
         try {
-          const url = `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&per_page=30&sort=created&order=desc`
-          
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-              Accept: 'application/vnd.github+json'
-            },
-            signal: controller.signal
-          })
-
-          const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
-          const rateLimitReset = response.headers.get('X-RateLimit-Reset')
-          
-          if (rateLimitReset) {
-            rateLimitResetRef.current = parseInt(rateLimitReset) * 1000
-          }
-
-          if (response.ok) {
-            const json: GithubSearchResponse = await response.json()
-            if (json.items) {
-              json.items.forEach((issue) => {
-                if (!currentSeenIds.has(issue.id)) {
-                  currentSeenIds.add(issue.id)
-                  allIssues.push(issue)
-                }
-              })
-              successCount++
+          // Fetch multiple pages from each query to get all available bounty issues
+          for (let page = 1; page <= maxPagesPerQuery; page++) {
+            if (rateLimitHit) {
+              break
             }
-          } else if (response.status === 403) {
-            rateLimitHit = true
-            setRateLimited(true)
+
+            const url = `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&page=${page}&per_page=${itemsPerPage}&sort=created&order=desc`
             
-            let resetTime = rateLimitResetRef.current || Date.now() + 60000
+            const response = await fetch(url, {
+              method: 'GET',
+              headers: {
+                Accept: 'application/vnd.github+json'
+              },
+              signal: controller.signal
+            })
+
+            const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
+            const rateLimitReset = response.headers.get('X-RateLimit-Reset')
+            
             if (rateLimitReset) {
-              resetTime = parseInt(rateLimitReset) * 1000
-              rateLimitResetRef.current = resetTime
+              rateLimitResetRef.current = parseInt(rateLimitReset) * 1000
             }
-            
-            const waitSeconds = Math.ceil((resetTime - Date.now()) / 1000)
-            const errorMsg = `GitHub API rate limit reached. Please wait ${waitSeconds} seconds or use cached results.`
-            
-            const cachedData = getCachedData()
-            if (cachedData && cachedData.length > 0) {
-              setItems(cachedData)
-              itemsRef.current = cachedData
-              setError(new Error(errorMsg))
-            } else {
-              setError(new Error(errorMsg))
-            }
-            break
-          }
 
-          if (rateLimitRemaining && parseInt(rateLimitRemaining) < 5) {
-            break
+            if (response.ok) {
+              const json: GithubSearchResponse = await response.json()
+              if (json.items && json.items.length > 0) {
+                // Add all items from this page (deduplication happens later)
+                json.items.forEach((issue) => {
+                  if (!currentSeenIds.has(issue.id)) {
+                    currentSeenIds.add(issue.id)
+                    allIssues.push(issue)
+                  }
+                })
+                
+                // If we got less than 100 items, we've reached the end for this query
+                if (json.items.length < itemsPerPage) {
+                  break
+                }
+              } else {
+                // No more items for this query
+                break
+              }
+            } else if (response.status === 403) {
+              rateLimitHit = true
+              setRateLimited(true)
+              
+              let resetTime = rateLimitResetRef.current || Date.now() + 60000
+              if (rateLimitReset) {
+                resetTime = parseInt(rateLimitReset) * 1000
+                rateLimitResetRef.current = resetTime
+              }
+              
+              const waitSeconds = Math.ceil((resetTime - Date.now()) / 1000)
+              const errorMsg = `GitHub API rate limit reached. Please wait ${waitSeconds} seconds or use cached results.`
+              
+              const cachedData = getCachedData()
+              if (cachedData && cachedData.length > 0) {
+                setItems(cachedData)
+                itemsRef.current = cachedData
+                setError(new Error(errorMsg))
+              } else {
+                setError(new Error(errorMsg))
+              }
+              break
+            }
+
+            if (rateLimitRemaining && parseInt(rateLimitRemaining) < 5) {
+              rateLimitHit = true
+              break
+            }
+
+            // Small delay between pages to avoid rate limiting
+            if (page < maxPagesPerQuery) {
+              await new Promise(resolve => setTimeout(resolve, 500))
+            }
           }
+          
+          successCount++
         } catch (err: unknown) {
           if ((err as any)?.name === 'AbortError') {
             return
           }
         }
 
+        // Delay between queries to avoid rate limiting
         if (i < bountyQueries.length - 1 && !rateLimitHit) {
-          await new Promise(resolve => setTimeout(resolve, 2000))
+          await new Promise(resolve => setTimeout(resolve, 1000))
         }
       }
       
@@ -226,16 +263,24 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         return true
       })
 
-      const potentialBountyIssues = openUnassignedIssues.filter(issue => hasBountyDetails(issue))
+      // Only show issues with real bounty labels - strict filtering
+      const potentialBountyIssues = openUnassignedIssues.filter(issue => {
+        // ONLY accept issues with actual bounty labels - no text matching
+        return hasBountyLabel(issue.labels || [])
+      })
       
-      const shouldSkipRepoValidation = rateLimitHit || rateLimitResetRef.current && Date.now() < rateLimitResetRef.current
+      const shouldSkipRepoValidation = rateLimitHit || (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current)
       
       let verifiedBountyIssues: GithubIssueItem[] = []
       
-      if (shouldSkipRepoValidation) {
+      // For pagination, we'll be more lenient with validation to avoid too many API calls
+      // But still validate on first page
+      if (shouldSkipRepoValidation || pageNum > 1) {
+        // On subsequent pages, trust the initial filtering
         verifiedBountyIssues = potentialBountyIssues
       } else {
-        const batchSize = 2
+        // Only validate on first page to ensure quality
+        const batchSize = 3
         for (let i = 0; i < potentialBountyIssues.length; i += batchSize) {
           if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
             verifiedBountyIssues.push(...potentialBountyIssues.slice(i))
@@ -255,18 +300,18 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
           verifiedBountyIssues.push(...validIssues)
           
           if (i + batchSize < potentialBountyIssues.length) {
-            await new Promise(resolve => setTimeout(resolve, 2000))
+            await new Promise(resolve => setTimeout(resolve, 1500))
           }
         }
       }
+
+      // Total count will be set after filtering and verification
 
       if (successCount === 0 && verifiedBountyIssues.length === 0 && !isSilentRefresh) {
         const errorMsg = 'Unable to fetch bounty issues. This might be due to rate limiting or network issues. Please try again in a moment.'
         setError(new Error(errorMsg))
       } else {
         setError(null)
-        if (verifiedBountyIssues.length > 0) {
-        }
       }
 
       verifiedBountyIssues.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -275,34 +320,45 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         seenIdsRef.current.add(issue.id)
       })
 
-      const existingIds = new Set(itemsRef.current.map(item => item.id))
-      const newItems = verifiedBountyIssues.filter(issue => !existingIds.has(issue.id))
+      // Store all verified issues for pagination
+      // Always store all results in ref for pagination
+      itemsRef.current = verifiedBountyIssues
       
-      if (newItems.length > 0 && isSilentRefresh) {
-        setNewItemsCount(newItems.length)
-        setTimeout(() => setNewItemsCount(0), 5000)
+      // Paginate the combined results
+      const startIndex = (pageNum - 1) * perPage
+      const endIndex = startIndex + perPage
+      const finalItems = verifiedBountyIssues.slice(startIndex, endIndex)
+      
+      // Update total count based on all verified issues
+      if (pageNum === 1) {
+        setTotalCount(verifiedBountyIssues.length)
+        // Cache ALL verified issues, not just the current page
+        if (verifiedBountyIssues.length > 0) {
+          setCachedData(verifiedBountyIssues)
+        }
       }
-
-      const verifiedExistingItems = itemsRef.current.filter(issue => hasBountyDetails(issue))
       
-      const mergedItems = [...newItems, ...verifiedExistingItems]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 30)
+      setItems(finalItems)
       
-      itemsRef.current = mergedItems
-      
-      setItems(mergedItems)
+      // Only show new items count on first page refresh
+      if (pageNum === 1 && finalItems.length > 0 && isSilentRefresh) {
+        const existingIds = new Set(itemsRef.current.map(item => item.id))
+        const newItems = finalItems.filter(issue => !existingIds.has(issue.id))
+        if (newItems.length > 0) {
+          setNewItemsCount(newItems.length)
+          setTimeout(() => setNewItemsCount(0), 5000)
+        }
+      }
       setLastRefreshTime(new Date())
       
-      if (mergedItems.length > 0) {
-        setCachedData(mergedItems)
-        loadCachedLanguagesForIssues(mergedItems)
-      }
-      
-      if (mergedItems.length > 0 && !rateLimitHit && (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current)) {
-          fetchLanguagesForIssues(mergedItems).catch(() => {
+      if (finalItems.length > 0) {
+        loadCachedLanguagesForIssues(finalItems)
+        
+        if (!rateLimitHit && (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current)) {
+          fetchLanguagesForIssues(finalItems).catch(() => {
           })
         }
+      }
       
       setTimeout(() => {
         setIsLoading(false)
@@ -337,42 +393,76 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
   useEffect(() => {
     setError(null)
 
-    const cachedData = getCachedData()
-    if (cachedData && cachedData.length > 0) {
-      setItems(cachedData)
-      itemsRef.current = cachedData
-      setIsLoading(false)
-      setLastRefreshTime(new Date())
-      loadCachedLanguagesForIssues(cachedData)
-      if (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current) {
-        fetchLanguagesForIssues(cachedData).catch(() => {
-        })
+    // Only use cache on first page load
+    if (page === 1) {
+      const cachedData = getCachedData()
+      if (cachedData && cachedData.length > 0) {
+        // Use cached data and paginate it
+        itemsRef.current = cachedData
+        setTotalCount(cachedData.length)
+        const startIndex = (page - 1) * perPage
+        const endIndex = startIndex + perPage
+        const paginatedItems = cachedData.slice(startIndex, endIndex)
+        setItems(paginatedItems)
+        setIsLoading(false)
+        setLastRefreshTime(new Date())
+        loadCachedLanguagesForIssues(paginatedItems)
+        if (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current) {
+          fetchLanguagesForIssues(paginatedItems).catch(() => {
+          })
+        }
+      } else {
+        setIsLoading(true)
+        fetchBountyIssues(false, false, page)
       }
     } else {
-      setIsLoading(true)
-      fetchBountyIssues(false)
+      // For subsequent pages, use cached data if available, otherwise fetch
+      if (itemsRef.current.length > 0) {
+        // Paginate from cached results
+        const startIndex = (page - 1) * perPage
+        const endIndex = startIndex + perPage
+        const paginatedItems = itemsRef.current.slice(startIndex, endIndex)
+        setItems(paginatedItems)
+        setIsLoading(false)
+        loadCachedLanguagesForIssues(paginatedItems)
+      } else {
+        // Need to fetch fresh data
+        setIsLoading(true)
+        fetchBountyIssues(false, true, 1) // Always fetch page 1 to get all data
+      }
     }
 
-    intervalRef.current = setInterval(() => {
-      if (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current) {
-        fetchBountyIssues(true)
-      }
-    }, 600000)
+    // Only set up auto-refresh on first page
+    if (page === 1) {
+      intervalRef.current = setInterval(() => {
+        if (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current) {
+          fetchBountyIssues(true, false, 1)
+        }
+      }, 600000)
+    }
 
     return () => {
       if (abortRef.current) {
         abortRef.current.abort()
       }
-      if (intervalRef.current) {
+      if (intervalRef.current && page === 1) {
         clearInterval(intervalRef.current)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [page])
 
   const handleManualRefresh = () => {
-    fetchBountyIssues(false, true)
+    setPage(1)
+    fetchBountyIssues(false, true, 1)
   }
+
+  // Calculate total pages - if we have items but no totalCount, estimate based on current page
+  const totalPages = totalCount > 0 
+    ? Math.max(1, Math.ceil(totalCount / perPage)) 
+    : (items.length >= perPage ? page + 1 : page) // Estimate if we have a full page
+  const hasPrevPage = page > 1
+  const hasNextPage = items.length >= perPage || (totalCount > 0 && page < totalPages)
 
   const formatTimeAgo = (date: Date) => {
     const now = new Date()
@@ -692,10 +782,30 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
 
   const hasBountyLabel = (labels: Array<{ name?: string; color?: string }>): boolean => {
     if (!labels || labels.length === 0) return false
-    const bountyKeywords = ['bounty', 'bountysource', 'funded', 'cash-prize', 'sponsor', 'paid', 'bounty-ready', 'bounty-available', 'reward', 'prize', 'issuehunt']
+    
+    // Strict list of real bounty labels that indicate actual bounties
+    const realBountyLabels = [
+      'bounty',
+      'bountysource',
+      'funded',
+      'sponsor',
+      'sponsored',
+      'paid',
+      'issuehunt',
+      'bounty-ready',
+      'bounty-available',
+      'cash-prize',
+      'cash-prize-available',
+      'monetary-reward',
+      'funded-issue',
+    ]
+    
     return labels.some(label => {
-      const labelLower = label.name?.toLowerCase() || ''
-      return bountyKeywords.some(keyword => labelLower.includes(keyword))
+      const labelLower = (label.name?.toLowerCase() || '').trim()
+      // Exact match or starts with the label (for variations like "bounty-xyz")
+      return realBountyLabels.some(bountyLabel => 
+        labelLower === bountyLabel || labelLower.startsWith(bountyLabel + '-')
+      )
     })
   }
 
@@ -787,117 +897,45 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     }
   }
 
-  const hasBountyDetails = (issue: GithubIssueItem): boolean => {
-    const title = (issue.title || '').toLowerCase()
-    const body = (issue.body || '').toLowerCase()
-    const combinedText = `${title} ${body}`
-    
-    const bountyKeywords = [
-      'bounty', 'bountysource', 'issuehunt', 'bounties',
-      'cash prize', 'cash reward', 'monetary reward',
-      'sponsor', 'sponsorship', 'sponsored',
-      'paid', 'payment', 'reward', 'prize', 'prize money',
-      'funded', 'funding', 'compensation', 'compensated'
-    ]
-    
-    const hasBountyKeyword = bountyKeywords.some(keyword => combinedText.includes(keyword))
-    if (!hasBountyKeyword) return false
-    
-    const monetaryIndicators = [
-      /\$\d+/,
-      /\d+\s*(usd|dollar|dollars|eur|euro|euros|gbp|pound|pounds|btc|bitcoin)/i,
-      /(reward|prize|bounty|payment).*?\$\d+/i,
-      /(reward|prize|bounty|payment).*?\d+.*?(usd|dollar|btc)/i,
-      /(bountysource|issuehunt|codefund)/i,
-    ]
-    
-    const hasMonetaryValue = monetaryIndicators.some(pattern => pattern.test(combinedText))
-    
-    const hasMinimumContent = body.length > 50 || title.length > 20
-    
-    const spamPatterns = [
-      /!{3,}/,
-      /[A-Z]{20,}/,
-      /(click|free|urgent|limited time|act now)/i,
-    ]
-    
-    const hasSpamPatterns = spamPatterns.some(pattern => pattern.test(combinedText))
-    
-    const knownPlatforms = /(bountysource\.com|issuehunt\.io|codefund\.io)/i.test(combinedText)
-    
-    return hasBountyKeyword && (hasMonetaryValue || knownPlatforms || hasMinimumContent) && !hasSpamPatterns
-  }
 
   const isBountyIssue = async (issue: GithubIssueItem): Promise<boolean> => {
-    if (!hasBountyDetails(issue)) {
+    // ONLY accept issues with real bounty labels - no text matching
+    if (!hasBountyLabel(issue.labels || [])) {
       return false
     }
     
     const shouldSkipRepoCheck = rateLimitResetRef.current && Date.now() < rateLimitResetRef.current
 
-    if (hasBountyLabel(issue.labels || [])) {
-      if (!shouldSkipRepoCheck) {
-        const isLegit = await isLegitimateRepository(issue.repository_url)
-        if (!isLegit) {
-          return false
-        }
+    // If it has a bounty label, validate the repository is legitimate
+    if (!shouldSkipRepoCheck) {
+      const isLegit = await isLegitimateRepository(issue.repository_url)
+      if (!isLegit) {
+        return false
       }
-      return true
     }
-
-    const titleLower = (issue.title || '').toLowerCase()
-    const bodyLower = (issue.body || '').toLowerCase()
-    const combinedText = `${titleLower} ${bodyLower}`
     
-    const bountyKeywords = [
-      'bounty', 'bounties', 'bountysource', 'issuehunt',
-      'cash prize', 'cash reward', 'monetary reward',
-      'sponsor', 'sponsorship', 'sponsored',
-      'paid', 'payment', 'reward', 'prize', 'prize money',
-      'funded', 'funding', 'compensation', 'compensated'
-    ]
-    
-    const hasBountyKeyword = bountyKeywords.some(keyword => combinedText.includes(keyword))
-    
-    if (hasBountyKeyword) {
-      if (!shouldSkipRepoCheck) {
-        const isLegit = await isLegitimateRepository(issue.repository_url)
-        if (!isLegit) {
-          return false
-        }
-      }
-      
-      const hasSubstance = bodyLower.length > 100 || 
-        /(fix|implement|add|create|build|develop)/i.test(combinedText)
-      
-      return hasSubstance
-    }
-
-    return false
+    return true
   }
 
   return (
-    <section className={`relative bg-gradient-to-br from-amber-50/50 via-white to-orange-50/30 dark:from-amber-950/10 dark:via-gray-900 dark:to-orange-950/10 border-l-4 border-amber-500 dark:border-amber-600 border-t border-r border-b border-gray-200 dark:border-gray-800 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 ${className}`}>
-      <div className="absolute top-0 right-0 -mt-3 -mr-3">
-        <div className="bg-amber-500 dark:bg-amber-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md">
-          Featured
-        </div>
-      </div>
-      <div className="p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="flex items-start gap-3">
+    <section className={`relative bg-gradient-to-br from-amber-50/40 via-white to-orange-50/20 dark:from-amber-950/5 dark:via-gray-900 dark:to-orange-950/5 border border-amber-200/60 dark:border-amber-800/30 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 ${className}`}>
+      <div className="p-6 sm:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div className="flex items-start gap-4">
             <div className="flex-shrink-0 mt-1">
-              <svg className="w-6 h-6 text-amber-600 dark:text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
-              </svg>
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
+                </svg>
+              </div>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-2">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                 Bounty Issues
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Unsolved bounty issues - fix them and earn rewards
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                Verified bounty issues with real rewards - fix them and earn money
               </p>
             </div>
           </div>
@@ -1029,8 +1067,9 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         )}
 
         {!isLoading && filteredItems.length > 0 && (
-          <div className="space-y-3">
-            {filteredItems.map((issue) => {
+          <>
+            <div className="space-y-3">
+              {filteredItems.map((issue) => {
               const repo = issue.repository_url?.split('/').slice(-2).join('/')
               const difficulty = detectDifficulty(issue.labels || [])
               const isBounty = hasBountyLabel(issue.labels || [])
@@ -1038,7 +1077,7 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
               return (
                 <article 
                   key={issue.id} 
-                  className="group relative p-4 border-l-2 border-l-amber-400 dark:border-l-amber-600 border-t border-r border-b border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800 hover:bg-amber-50/30 dark:hover:bg-amber-950/10 transition-all duration-200 hover:shadow-md"
+                  className="group relative p-5 border border-amber-200/60 dark:border-amber-800/30 rounded-xl hover:border-amber-300 dark:hover:border-amber-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -1124,7 +1163,59 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
                 </article>
               )
             })}
-          </div>
+            </div>
+            
+            {/* Pagination Controls - Always show when we have items */}
+            {filteredItems.length > 0 && (
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPage((p) => Math.max(1, p - 1))
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-white px-4 py-2 text-sm font-semibold text-amber-600 shadow-sm transition hover:border-amber-300 hover:text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 dark:border-amber-900/40 dark:bg-gray-800 dark:text-amber-300 dark:hover:border-amber-700 dark:hover:text-amber-200"
+                  disabled={!hasPrevPage || isLoading}
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Previous
+                </button>
+
+                <div className="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/10 dark:text-amber-300">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h3.382a1 1 0 01.894.553l1.447 2.894A1 1 0 0010.618 7H19a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4z" />
+                  </svg>
+                  Page {page}
+                  {totalCount > 0 ? (
+                    <>
+                      {' '}of {totalPages}
+                      <span className="hidden text-slate-500 dark:text-slate-300 sm:inline">•</span>
+                      <span className="hidden text-slate-600 dark:text-slate-300 sm:inline">{totalCount.toLocaleString()} total issues</span>
+                    </>
+                  ) : (
+                    <span className="text-slate-500 dark:text-slate-400">• {filteredItems.length} issues on this page</span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPage((p) => p + 1)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-white px-4 py-2 text-sm font-semibold text-amber-600 shadow-sm transition hover:border-amber-300 hover:text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 dark:border-amber-900/40 dark:bg-gray-800 dark:text-amber-300 dark:hover:border-amber-700 dark:hover:text-amber-200"
+                  disabled={!hasNextPage || isLoading}
+                >
+                  Next
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
