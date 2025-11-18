@@ -2,6 +2,8 @@
 
 A modern, full-stack web application that helps developers discover the best GitHub issues and repositories to contribute to. Whether you're a beginner or an experienced developer, IssueFinder makes it easy to find open-source opportunities filtered by category, language, and interests.
 
+**Perfect for beginners!** Includes a comprehensive step-by-step guide to help you make your first contribution, find beginner-friendly issues, and navigate the open source world with confidence.
+
 ## 🚀 Live Demo
 
 **[View Live Application](https://issuefinder.fun)**
@@ -14,6 +16,32 @@ A modern, full-stack web application that helps developers discover the best Git
 - **Multiple Categories**: Filter by bug, feature, enhancement, documentation, and more
 - **Language Filter**: Find issues in your preferred programming language (20+ languages)
 - **Debounced Search**: Optimized performance with search debouncing
+- **Pagination**: Navigate through pages of issues with Previous/Next controls
+- **Comprehensive Fetching**: Fetches up to 8,000 potential issues across multiple queries
+
+### 💰 Bounty Issues
+- **Real Bounty Issues Only**: Strict filtering to show only issues with actual bounty labels
+- **Label-Based Filtering**: Only displays issues with verified bounty labels (bounty, bountysource, funded, sponsor, paid, issuehunt, etc.)
+- **Multi-Page Fetching**: Fetches up to 10 pages per query (100 items/page) to get all available bounty issues
+- **Comprehensive Coverage**: Searches across 8 different bounty label queries
+- **Pagination Support**: Full pagination through all available bounty issues
+- **Smart Caching**: Caches all fetched issues for fast reload and pagination
+- **Repository Validation**: Verifies repositories are legitimate before displaying issues
+- **Strong CTAs**: Compelling call-to-action sections encouraging contributions
+
+### 📖 Beginner Guide
+- **Comprehensive 6-Step Guide**: Complete walkthrough from setup to first pull request
+  - Step 1: Set Up Your Development Environment
+  - Step 2: Find Beginner-Friendly Issues
+  - Step 3: Fork and Clone the Repository
+  - Step 4: Make Your Changes
+  - Step 5: Test and Commit Your Changes
+  - Step 6: Create a Pull Request
+- **Pro Tips Section**: 6 helpful tips for beginners
+- **Language Filter**: Filter beginner issues by 19+ popular programming languages
+- **External Resources**: Links to GitHub Guides, First Contributions, Git Docs, and more
+- **Language-Agnostic**: Works for all programming languages
+- **Visual Step Indicators**: Numbered badges and icons for each step
 
 ### 📚 Repository Explorer
 - **Advanced Search**: Search repositories by name or owner/repo format (e.g., `facebook/react`)
@@ -24,14 +52,18 @@ A modern, full-stack web application that helps developers discover the best Git
   - Last updated timestamp
   - Repository description and language
 - **Repository Details Modal**: Deep-dive into repository information
+- **Back to Home Navigation**: Easy navigation back to homepage
 
 ### 🎨 User Experience
 - **Dark Mode**: Seamless dark/light theme switching with system preference detection
 - **Responsive Design**: Fully optimized for mobile, tablet, and desktop
-- **Infinite Scroll**: Load more issues/repositories with ease
+- **Pagination**: Navigate through pages with Previous/Next buttons and page counters
 - **Loading States**: Beautiful skeleton loaders and loading indicators
 - **Error Handling**: Graceful error messages and handling
 - **Accessibility**: ARIA labels and keyboard navigation support
+- **Smooth Animations**: Hover effects, transitions, and transform animations
+- **Soothing UI**: Modern gradient backgrounds and calming color schemes
+- **Navigation**: Consistent "Back to Home" buttons across all pages
 
 ### 🎯 Filtering System
 - **Issue Categories**:
@@ -87,16 +119,30 @@ IssueHub/
 │   │   │   ├── Hero.tsx
 │   │   │   ├── FiltersPanel.tsx
 │   │   │   ├── IssueList.tsx
+│   │   │   ├── BountyIssues.tsx
 │   │   │   ├── RepositoryList.tsx
 │   │   │   ├── RepositoryModal.tsx
+│   │   │   ├── DifficultyBadge.tsx
 │   │   │   └── Footer.tsx
+│   │   ├── pages/         # Page components
+│   │   │   ├── HomePage.tsx
+│   │   │   ├── BountyIssuesPage.tsx
+│   │   │   ├── BeginnerGuidePage.tsx
+│   │   │   ├── SearchResultsPage.tsx
+│   │   │   └── RepositoriesPage.tsx
 │   │   ├── contexts/      # React contexts
-│   │   │   └── ThemeContext.tsx
+│   │   │   ├── ThemeContext.tsx
+│   │   │   └── SearchContext.tsx
 │   │   ├── hooks/         # Custom React hooks
 │   │   │   ├── useFetchIssues.ts
 │   │   │   ├── useFetchRepositories.ts
 │   │   │   ├── useFetchRepositoryDetails.ts
 │   │   │   └── useSearchRepository.ts
+│   │   ├── utils/         # Utility functions
+│   │   │   ├── queryBuilder.ts
+│   │   │   ├── difficulty.ts
+│   │   │   ├── languageDetection.ts
+│   │   │   └── repoLanguages.ts
 │   │   ├── App.tsx        # Main application component
 │   │   ├── main.tsx       # Application entry point
 │   │   └── index.css      # Global styles
@@ -185,29 +231,69 @@ node app.js
 - **Issues**: Debounced search with multi-category filtering
 - **Repositories**: Real-time search with owner/repo format support
 - **Query Optimization**: GitHub API query string construction for efficient searches
+- **Bounty Issues**: Multi-query fetching with label-based filtering
+
+### Bounty Issues System
+- **Multi-Page Fetching**: Fetches up to 10 pages per query (100 items/page)
+- **Comprehensive Coverage**: 8 different bounty label queries
+- **Strict Filtering**: Only shows issues with verified bounty labels
+- **Repository Validation**: Checks repository legitimacy before display
+- **Smart Caching**: Caches all fetched issues for fast pagination
+- **Rate Limit Handling**: Graceful degradation with delays between requests
+
+### Pagination
+- **Client-Side Pagination**: Paginates through cached results
+- **Page Controls**: Previous/Next buttons with proper disabled states
+- **Page Counter**: Shows current page and total pages
+- **Total Count Display**: Shows total number of issues when available
+- **Smooth Scrolling**: Auto-scrolls to top on page change
+
+### Beginner Guide
+- **Step-by-Step Instructions**: 6 comprehensive steps with detailed actions
+- **Visual Indicators**: Numbered badges, icons, and connector lines
+- **Pro Tips**: 6 helpful tips for successful contributions
+- **Language Filtering**: Interactive language selection with 19+ options
+- **External Resources**: Links to learning materials and tutorials
+- **Responsive Layout**: Optimized for all screen sizes
 
 ### State Management
 - **Local State**: React hooks for component-level state
-- **Context API**: Theme management across the application
+- **Context API**: Theme and search state management across the application
 - **Memoization**: Optimized re-renders with useMemo and useCallback
+- **Refs for Caching**: useRef for storing fetched data and pagination state
 
 ### API Integration
 - **GitHub REST API**: Direct integration for issue and repository data
 - **Error Handling**: Comprehensive error states and user feedback
-- **Rate Limiting**: Graceful handling of API rate limits
+- **Rate Limiting**: Graceful handling of API rate limits with delays
 - **Abort Controllers**: Request cancellation for better UX
+- **Multi-Query Strategy**: Parallel queries with deduplication
+- **Caching Strategy**: localStorage caching with expiration
 
 ### Responsive Design
 - **Mobile-First**: Optimized for all screen sizes
 - **Touch-Friendly**: Large tap targets and swipe gestures
 - **Adaptive Layout**: Grid and flexbox layouts
+- **Breakpoint Optimization**: Tailored layouts for sm, md, lg, xl screens
 
 ## 🌟 Use Cases
 
-- **Beginner Developers**: Find "good first issue" tags to start contributing
-- **Open Source Contributors**: Discover projects in your tech stack
-- **Project Maintainers**: Find repositories that need help
-- **Learning**: Explore codebases and coding patterns
+- **Beginner Developers**: 
+  - Comprehensive beginner guide with step-by-step instructions
+  - Find "good first issue" tags to start contributing
+  - Language-specific filtering for all skill levels
+  - Learn the complete contribution workflow
+- **Open Source Contributors**: 
+  - Discover projects in your tech stack
+  - Find bounty issues with real rewards
+  - Filter by difficulty, type, and framework
+- **Project Maintainers**: 
+  - Find repositories that need help
+  - Discover contributors looking for projects
+- **Learning**: 
+  - Explore codebases and coding patterns
+  - Learn from real-world open source projects
+  - Understand contribution workflows
 
 ## 🤝 Contributing
 
@@ -242,10 +328,18 @@ This project is licensed under the ISC License.
 
 - **Languages**: TypeScript, JavaScript, HTML, CSS
 - **Dependencies**: 50+ packages
-- **Components**: 7+ reusable components
+- **Components**: 10+ reusable components
+- **Pages**: 5 main pages (Home, Bounty Issues, Beginner Guide, Search, Repositories)
 - **Hooks**: 4 custom React hooks
 - **API Endpoints**: GitHub REST API
 - **Build Size**: Optimized for production
+- **Features**: 
+  - Issue discovery with advanced filtering
+  - Bounty issues with comprehensive fetching
+  - Beginner guide with step-by-step instructions
+  - Repository explorer with detailed views
+  - Full pagination support
+  - Dark mode and responsive design
 
 ---
 
