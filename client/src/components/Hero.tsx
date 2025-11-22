@@ -45,6 +45,14 @@ const Hero: React.FC = () => {
             </div>
 
             <div className="space-y-4">
+              <div className="flex items-center gap-3 rounded-full border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-2.5 w-fit mx-auto lg:mx-0 dark:border-emerald-900/40 dark:from-emerald-900/20 dark:to-teal-900/20">
+                <svg className="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  Ready to make your first contribution? Start here and find issues that match your skills!
+                </p>
+              </div>
               <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-5xl lg:text-6xl">
                 Find GitHub issues that match your skills
               </h1>
