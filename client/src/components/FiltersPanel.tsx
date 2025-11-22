@@ -10,8 +10,6 @@ type FiltersPanelProps = {
   selectedCategories?: string[]
   onToggleCategory?: (category: string) => void
   isMobile?: boolean
-
-  
   selectedDifficulty?: string | null
   onChangeDifficulty?: (difficulty: string | null) => void
   selectedType?: string | null
@@ -142,6 +140,7 @@ const POPULAR_LICENSES = [
   { key: 'lgpl-3.0', label: 'LGPL 3.0' },
 ]
 
+
 const FiltersPanel: React.FC<FiltersPanelProps> = ({ 
   className = '', 
   selectedLabels, 
@@ -239,36 +238,104 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
   ].reduce((sum, count) => sum + count, 0)
 
   return (
-    <aside className={`rounded-2xl border border-slate-200 bg-white/95 shadow-sm transition-colors duration-200 dark:border-gray-700 dark:bg-gray-900 ${className}`}>
+    <aside className={`rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors duration-200 dark:border-gray-700 dark:bg-gray-900 ${className}`}>
       <div className="p-5 sm:p-6">
-        <h2 className="mb-4 flex items-center justify-between text-base font-semibold text-gray-900 dark:text-gray-100">
-          <span className="flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="mb-6 flex items-center justify-between border-b border-slate-200 pb-4 dark:border-gray-700">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-gray-100">
+            <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
             Filters
-          </span>
+          </h2>
           {activeFilterCount > 0 && (
-            <span className="inline-flex items-center justify-center rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-white dark:bg-slate-100 dark:text-slate-900">
-              {activeFilterCount}
+            <span className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-bold text-white dark:bg-emerald-500">
+              {activeFilterCount} active
             </span>
           )}
-        </h2>
+        </div>
 
-        <div className="space-y-5">
+        <div className="space-y-4">
+          {/* Active Filter Chips */}
+          {activeFilterCount > 0 && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 px-4 py-3 dark:border-emerald-800/50 dark:bg-emerald-900/10">
+              <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Active Filters
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {selectedDifficulty && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm dark:border-emerald-700 dark:bg-gray-800 dark:text-emerald-300">
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {DIFFICULTY_LEVELS.find((d) => d.key === selectedDifficulty)?.label || selectedDifficulty}
+                    <button
+                      onClick={() => onChangeDifficulty?.(null)}
+                      className="ml-0.5 rounded-full p-0.5 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
+                      aria-label="Remove difficulty filter"
+                    >
+                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                )}
+                {selectedLanguage && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm dark:border-emerald-700 dark:bg-gray-800 dark:text-emerald-300">
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                    {POPULAR_LANGUAGES.find((l) => l.key === selectedLanguage)?.label || selectedLanguage}
+                    <button
+                      onClick={() => onChangeLanguage(null)}
+                      className="ml-0.5 rounded-full p-0.5 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
+                      aria-label="Remove language filter"
+                    >
+                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                )}
+                {selectedLabels.map((label) => (
+                  <span
+                    key={label}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm dark:border-emerald-700 dark:bg-gray-800 dark:text-emerald-300"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    {CURATED_LABELS.find((l) => l.key === label)?.label || label}
+                    <button
+                      onClick={() => onToggleLabel(label)}
+                      className="ml-0.5 rounded-full p-0.5 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
+                      aria-label={`Remove ${label} filter`}
+                    >
+                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Curated Tags */}
           {showTags && (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+            <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <button
                 type="button"
                 onClick={() => toggleSection('tags')}
-                className="flex w-full items-center justify-between text-sm font-semibold text-slate-800 transition hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-200"
+                className="flex w-full items-center justify-between text-sm font-semibold text-gray-900 transition hover:text-emerald-600 dark:text-gray-100 dark:hover:text-emerald-400"
               >
                 <span className="flex items-center gap-2">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 w-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a2 2 0 012-2h3.586a1 1 0 01.707.293l9.414 9.414a2 2 0 010 2.828l-3.172 3.172a2 2 0 01-2.828 0L4.293 8.121A1 1 0 014 7.414V5z" />
                   </svg>
-                  High-signal tags
+                  Issue Tags
                 </span>
                 <svg
                   className={`h-4 w-4 transition-transform ${expandedSections.tags ? 'rotate-180' : ''}`}
@@ -281,7 +348,7 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
               </button>
 
               {expandedSections.tags && (
-                <div className="mt-3 space-y-2">
+                <div className="mt-3 grid grid-cols-1 gap-2">
                   {CURATED_LABELS.map((tag) => {
                     const active = selectedLabels.includes(tag.key)
                     return (
@@ -289,14 +356,21 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
                         key={tag.key}
                         type="button"
                         onClick={() => onToggleLabel(tag.key)}
-                        className={`w-full rounded-lg border px-3 py-2 text-left transition ${
+                        className={`w-full rounded-lg border px-3 py-2.5 text-left transition ${
                           active
-                            ? 'border-slate-600 bg-slate-900 text-white shadow-sm dark:border-slate-500 dark:bg-slate-700'
-                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100 dark:border-gray-700 dark:bg-gray-900 dark:text-slate-300 dark:hover:border-gray-600 dark:hover:bg-gray-800'
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-900 shadow-sm dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-200'
+                            : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-gray-700 dark:bg-gray-900 dark:text-slate-300 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/10'
                         }`}
                       >
-                        <div className="text-sm font-semibold leading-tight">{tag.label}</div>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{tag.description}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm font-semibold leading-tight">{tag.label}</div>
+                          {active && (
+                            <svg className="h-4 w-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{tag.description}</p>
                       </button>
                     )
                   })}
@@ -305,22 +379,22 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
             </div>
           )}
 
-          {/* Difficulty Filter - Always Visible, Most Important */}
+          {/* Difficulty Filter - Essential for all developers */}
           {showTags && onChangeDifficulty && (
-            <div className="space-y-3">
+            <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <button
                 type="button"
                 onClick={() => toggleSection('difficulty')}
-                className="flex w-full items-center justify-between text-sm font-semibold text-gray-900 transition hover:text-slate-800 dark:text-gray-100 dark:hover:text-slate-200"
+                className="flex w-full items-center justify-between text-sm font-semibold text-gray-900 transition hover:text-emerald-600 dark:text-gray-100 dark:hover:text-emerald-400"
               >
                 <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 w-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Difficulty Level
                 </span>
                 <svg 
-                  className={`w-4 h-4 transition-transform ${expandedSections.difficulty ? 'rotate-180' : ''}`}
+                  className={`h-4 w-4 transition-transform ${expandedSections.difficulty ? 'rotate-180' : ''}`}
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -329,16 +403,16 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
                 </svg>
               </button>
               {expandedSections.difficulty && (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   {DIFFICULTY_LEVELS.map((opt) => (
                     <button
                       key={String(opt.key)}
                       type="button"
                       onClick={() => onChangeDifficulty(opt.key ?? null)}
-                      className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
+                      className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
                         (selectedDifficulty ?? '') === (opt.key ?? '')
                           ? `${getDifficultyColor(opt.key)} shadow-sm`
-                          : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-slate-300 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-slate-500'
+                          : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/10'
                       }`}
                     >
                       {opt.label}
@@ -440,21 +514,21 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
             </div>
           )}
 
-          {/* Language Filter */}
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+          {/* Language Filter - Essential for all developers */}
+          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <button
               type="button"
               onClick={() => toggleSection('language')}
-              className="flex w-full items-center justify-between text-sm font-semibold text-slate-800 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-200"
+              className="flex w-full items-center justify-between text-sm font-semibold text-gray-900 transition hover:text-emerald-600 dark:text-gray-100 dark:hover:text-emerald-400"
             >
               <span className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 w-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                 </svg>
-                Language
+                Programming Language
               </span>
               <svg 
-                className={`w-4 h-4 transition-transform ${expandedSections.language ? 'rotate-180' : ''}`}
+                className={`h-4 w-4 transition-transform ${expandedSections.language ? 'rotate-180' : ''}`}
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -469,10 +543,10 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
                     key={String(opt.key)}
                     type="button"
                     onClick={() => onChangeLanguage(opt.key ?? null)}
-                    className={`rounded-md border px-3 py-1.5 text-xs font-medium transition text-left ${
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition text-left ${
                       (selectedLanguage ?? '') === (opt.key ?? '')
-                        ? 'border-slate-600 bg-slate-700 text-white dark:border-slate-500 dark:bg-slate-600'
-                        : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-slate-300 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-slate-500'
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-900 shadow-sm dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-200'
+                        : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/10'
                     }`}
                   >
                     {opt.label}
@@ -624,9 +698,14 @@ const FiltersPanel: React.FC<FiltersPanelProps> = ({
             <button
               type="button"
               onClick={handleClearFilters}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:border-gray-700 dark:bg-gray-800 dark:text-slate-200 dark:hover:border-gray-600 dark:hover:text-white"
+              className="w-full rounded-lg border-2 border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-red-400 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-200 dark:border-gray-700 dark:bg-gray-800 dark:text-slate-200 dark:hover:border-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
             >
-              Clear all filters
+              <span className="flex items-center justify-center gap-2">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Clear All Filters
+              </span>
             </button>
           )}
         </div>
