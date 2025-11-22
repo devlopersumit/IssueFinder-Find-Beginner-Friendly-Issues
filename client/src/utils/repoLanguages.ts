@@ -34,13 +34,13 @@ export async function fetchRepositoryLanguages(repoUrl: string): Promise<string[
     if (cached) {
       const { languages, timestamp } = JSON.parse(cached)
       const cacheAge = Date.now() - timestamp
-      const cacheMaxAge = 30 * 60 * 1000
+      const cacheMaxAge = 24 * 60 * 60 * 1000
       if (cacheAge < cacheMaxAge && Array.isArray(languages)) {
         return languages
       }
     }
-    } catch (err) {
-    }
+  } catch (err) {
+  }
 
   try {
     const parts = repoUrl.replace('https://api.github.com/repos/', '').split('/')
@@ -57,6 +57,16 @@ export async function fetchRepositoryLanguages(repoUrl: string): Promise<string[
     })
     
     if (!response.ok) {
+      if (response.status === 403 || response.status === 404) {
+        try {
+          const cacheKey = `repoLanguages_${repoUrl}`
+          localStorage.setItem(cacheKey, JSON.stringify({
+            languages: [],
+            timestamp: Date.now()
+          }))
+        } catch (err) {
+        }
+      }
       return []
     }
 
@@ -65,7 +75,7 @@ export async function fetchRepositoryLanguages(repoUrl: string): Promise<string[
     const sortedLanguages = Object.entries(languages)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
-        .map(([lang]) => lang)
+      .map(([lang]) => lang)
     
     if (sortedLanguages.length > 0) {
       try {
