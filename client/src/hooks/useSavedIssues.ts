@@ -25,7 +25,6 @@ export function useSavedIssues() {
         }
       }
     } catch (err) {
-      // Ignore errors
     }
   }, [])
 
@@ -38,7 +37,6 @@ export function useSavedIssues() {
       try {
         localStorage.setItem(SAVED_ISSUES_KEY, JSON.stringify(newIssues))
       } catch (err) {
-        // Ignore errors
       }
       return newIssues
     })
@@ -50,7 +48,6 @@ export function useSavedIssues() {
       try {
         localStorage.setItem(SAVED_ISSUES_KEY, JSON.stringify(newIssues))
       } catch (err) {
-        // Ignore errors
       }
       return newIssues
     })
@@ -65,7 +62,6 @@ export function useSavedIssues() {
     try {
       localStorage.removeItem(SAVED_ISSUES_KEY)
     } catch (err) {
-      // Ignore errors
     }
   }
 

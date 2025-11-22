@@ -44,14 +44,12 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
       setIsLoading(true)
       setError(null)
       try {
-        // Don't fetch if query is empty
         if (!query || query.trim() === '') {
           setData({ total_count: 0, incomplete_results: false, items: [] })
           setIsLoading(false)
           return
         }
 
-        // Check cache first
         const cached = getCached<GithubSearchResponse>(cacheKey)
         if (cached) {
           setData(cached)

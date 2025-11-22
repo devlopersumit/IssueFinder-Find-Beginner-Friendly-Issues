@@ -4,7 +4,7 @@ type CacheEntry<T> = {
   expiresAt: number
 }
 
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000
 const cache = new Map<string, CacheEntry<unknown>>()
 
 export function getCached<T>(key: string): T | null {

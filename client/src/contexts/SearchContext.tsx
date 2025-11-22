@@ -18,10 +18,8 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [submittedSearch, setSubmittedSearch] = useState<string>('')
   const [isDebouncing, setIsDebouncing] = useState<boolean>(false)
   
-  // Debounce the search term with 400ms delay
   const debouncedSearchTerm = useDebounce(searchTerm, 400)
 
-  // Auto-submit search when debounced value changes
   useEffect(() => {
     if (searchTerm !== debouncedSearchTerm) {
       setIsDebouncing(true)
@@ -40,7 +38,6 @@ export const SearchProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setSearchTerm(trimmedTerm)
     setSubmittedSearch(trimmedTerm)
     setIsDebouncing(false)
-    // Search history is handled in Header component
   }
 
   const clearSearch = () => {

@@ -7,16 +7,12 @@ const BountyIssuesPage: React.FC = () => {
   const [refreshKey, setRefreshKey] = useState(0)
   const { submittedSearch } = useSearch()
 
-  // Force remount when component mounts
   useEffect(() => {
     setRefreshKey(prev => prev + 1)
   }, [])
 
-  // If user has searched, show a message suggesting they use the search page
   useEffect(() => {
     if (submittedSearch && submittedSearch.trim()) {
-      // Search is handled globally - if they want to search, they should use the search page
-      // But we can still show bounty issues filtered by search if needed
     }
   }, [submittedSearch])
 

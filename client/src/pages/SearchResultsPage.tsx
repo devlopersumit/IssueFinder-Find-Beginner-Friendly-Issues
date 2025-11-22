@@ -11,7 +11,6 @@ const SearchResultsPage: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false)
-  // Advanced filters
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null)

@@ -16,7 +16,6 @@ export function useSearchHistory() {
         }
       }
     } catch (err) {
-      // Ignore errors
     }
   }, [])
 
@@ -30,7 +29,6 @@ export function useSearchHistory() {
       try {
         localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(newHistory))
       } catch (err) {
-        // Ignore errors
       }
       
       return newHistory
@@ -42,7 +40,6 @@ export function useSearchHistory() {
     try {
       localStorage.removeItem(SEARCH_HISTORY_KEY)
     } catch (err) {
-      // Ignore errors
     }
   }
 

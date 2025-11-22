@@ -10,10 +10,8 @@ type ErrorBoundaryState = {
   error: Error | null
 }
 
-// Helper to check if we're in development mode
 const isDevelopment = (): boolean => {
   try {
-    // @ts-expect-error - import.meta.env is available in Vite
     return import.meta.env?.DEV === true || import.meta.env?.MODE === 'development'
   } catch {
     return false
@@ -31,11 +29,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to console in development
     if (isDevelopment()) {
       console.error('ErrorBoundary caught an error:', error, errorInfo)
     }
-    // In production, you could log to an error reporting service
   }
 
   render() {

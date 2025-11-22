@@ -249,7 +249,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
                 <button
                   key={suggestion}
                   onClick={() => {
-                    // This would need to be connected to filter state
                     window.location.href = `/?search=${encodeURIComponent(suggestion)}`
                   }}
                   className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 dark:border-gray-600 dark:bg-gray-800 dark:text-slate-300 dark:hover:border-gray-500 dark:hover:bg-gray-700"

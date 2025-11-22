@@ -50,7 +50,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
   const rateLimitResetRef = useRef<number | null>(null)
   const languagesFetchedRef = useRef<Set<string>>(new Set())
 
-  // Only fetch issues with real bounty labels - these indicate actual bounties
   const bountyQueries = [
     'state:open no:assignee label:bounty',
     'state:open no:assignee label:bountysource',
@@ -92,7 +91,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
   }
 
   const fetchBountyIssues = async (isSilentRefresh: boolean = false, forceRefresh: boolean = false, pageNum: number = 1) => {
-    // Only use cache on initial load, not for pagination
     if (!forceRefresh && !isSilentRefresh && pageNum === 1) {
       const cachedData = getCachedData()
       if (cachedData) {
@@ -146,11 +144,10 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         }
 
         const query = bountyQueries[i]
-        const itemsPerPage = 100 // GitHub API max per page
-        const maxPagesPerQuery = 10 // GitHub API max is 1000 results = 10 pages
+        const itemsPerPage = 100
+        const maxPagesPerQuery = 10
         
         try {
-          // Fetch multiple pages from each query to get all available bounty issues
           for (let page = 1; page <= maxPagesPerQuery; page++) {
             if (rateLimitHit) {
               break
@@ -176,7 +173,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
             if (response.ok) {
               const json: GithubSearchResponse = await response.json()
               if (json.items && json.items.length > 0) {
-                // Add all items from this page (deduplication happens later)
                 json.items.forEach((issue) => {
                   if (!currentSeenIds.has(issue.id)) {
                     currentSeenIds.add(issue.id)
@@ -184,12 +180,10 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
                   }
                 })
                 
-                // If we got less than 100 items, we've reached the end for this query
                 if (json.items.length < itemsPerPage) {
                   break
                 }
               } else {
-                // No more items for this query
                 break
               }
             } else if (response.status === 403) {
@@ -221,7 +215,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
               break
             }
 
-            // Small delay between pages to avoid rate limiting
             if (page < maxPagesPerQuery) {
               await new Promise(resolve => setTimeout(resolve, 500))
             }
@@ -234,7 +227,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
           }
         }
 
-        // Delay between queries to avoid rate limiting
         if (i < bountyQueries.length - 1 && !rateLimitHit) {
           await new Promise(resolve => setTimeout(resolve, 1000))
         }
@@ -263,9 +255,7 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         return true
       })
 
-      // Only show issues with real bounty labels - strict filtering
       const potentialBountyIssues = openUnassignedIssues.filter(issue => {
-        // ONLY accept issues with actual bounty labels - no text matching
         return hasBountyLabel(issue.labels || [])
       })
       
@@ -273,13 +263,9 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       
       let verifiedBountyIssues: GithubIssueItem[] = []
       
-      // For pagination, we'll be more lenient with validation to avoid too many API calls
-      // But still validate on first page
       if (shouldSkipRepoValidation || pageNum > 1) {
-        // On subsequent pages, trust the initial filtering
         verifiedBountyIssues = potentialBountyIssues
       } else {
-        // Only validate on first page to ensure quality
         const batchSize = 3
         for (let i = 0; i < potentialBountyIssues.length; i += batchSize) {
           if (rateLimitResetRef.current && Date.now() < rateLimitResetRef.current) {
@@ -305,8 +291,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         }
       }
 
-      // Total count will be set after filtering and verification
-
       if (successCount === 0 && verifiedBountyIssues.length === 0 && !isSilentRefresh) {
         const errorMsg = 'Unable to fetch bounty issues. This might be due to rate limiting or network issues. Please try again in a moment.'
         setError(new Error(errorMsg))
@@ -320,19 +304,14 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         seenIdsRef.current.add(issue.id)
       })
 
-      // Store all verified issues for pagination
-      // Always store all results in ref for pagination
       itemsRef.current = verifiedBountyIssues
       
-      // Paginate the combined results
       const startIndex = (pageNum - 1) * perPage
       const endIndex = startIndex + perPage
       const finalItems = verifiedBountyIssues.slice(startIndex, endIndex)
       
-      // Update total count based on all verified issues
       if (pageNum === 1) {
         setTotalCount(verifiedBountyIssues.length)
-        // Cache ALL verified issues, not just the current page
         if (verifiedBountyIssues.length > 0) {
           setCachedData(verifiedBountyIssues)
         }
@@ -340,7 +319,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
       
       setItems(finalItems)
       
-      // Only show new items count on first page refresh
       if (pageNum === 1 && finalItems.length > 0 && isSilentRefresh) {
         const existingIds = new Set(itemsRef.current.map(item => item.id))
         const newItems = finalItems.filter(issue => !existingIds.has(issue.id))
@@ -393,11 +371,9 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
   useEffect(() => {
     setError(null)
 
-    // Only use cache on first page load
     if (page === 1) {
       const cachedData = getCachedData()
       if (cachedData && cachedData.length > 0) {
-        // Use cached data and paginate it
         itemsRef.current = cachedData
         setTotalCount(cachedData.length)
         const startIndex = (page - 1) * perPage
@@ -416,9 +392,7 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         fetchBountyIssues(false, false, page)
       }
     } else {
-      // For subsequent pages, use cached data if available, otherwise fetch
       if (itemsRef.current.length > 0) {
-        // Paginate from cached results
         const startIndex = (page - 1) * perPage
         const endIndex = startIndex + perPage
         const paginatedItems = itemsRef.current.slice(startIndex, endIndex)
@@ -426,13 +400,11 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         setIsLoading(false)
         loadCachedLanguagesForIssues(paginatedItems)
       } else {
-        // Need to fetch fresh data
         setIsLoading(true)
-        fetchBountyIssues(false, true, 1) // Always fetch page 1 to get all data
+        fetchBountyIssues(false, true, 1)
       }
     }
 
-    // Only set up auto-refresh on first page
     if (page === 1) {
       intervalRef.current = setInterval(() => {
         if (!rateLimitResetRef.current || Date.now() >= rateLimitResetRef.current) {
@@ -449,7 +421,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
         clearInterval(intervalRef.current)
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page])
 
   const handleManualRefresh = () => {
@@ -457,7 +428,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     fetchBountyIssues(false, true, 1)
   }
 
-  // Calculate total pages - if we have items but no totalCount, estimate based on current page
   const totalPages = totalCount > 0 
     ? Math.max(1, Math.ceil(totalCount / perPage)) 
     : (items.length >= perPage ? page + 1 : page) // Estimate if we have a full page
@@ -783,7 +753,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
   const hasBountyLabel = (labels: Array<{ name?: string; color?: string }>): boolean => {
     if (!labels || labels.length === 0) return false
     
-    // Strict list of real bounty labels that indicate actual bounties
     const realBountyLabels = [
       'bounty',
       'bountysource',
@@ -802,7 +771,6 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
     
     return labels.some(label => {
       const labelLower = (label.name?.toLowerCase() || '').trim()
-      // Exact match or starts with the label (for variations like "bounty-xyz")
       return realBountyLabels.some(bountyLabel => 
         labelLower === bountyLabel || labelLower.startsWith(bountyLabel + '-')
       )
@@ -899,14 +867,12 @@ const BountyIssues: React.FC<BountyIssuesProps> = ({ className = '' }) => {
 
 
   const isBountyIssue = async (issue: GithubIssueItem): Promise<boolean> => {
-    // ONLY accept issues with real bounty labels - no text matching
     if (!hasBountyLabel(issue.labels || [])) {
       return false
     }
     
     const shouldSkipRepoCheck = rateLimitResetRef.current && Date.now() < rateLimitResetRef.current
 
-    // If it has a bounty label, validate the repository is legitimate
     if (!shouldSkipRepoCheck) {
       const isLegit = await isLegitimateRepository(issue.repository_url)
       if (!isLegit) {

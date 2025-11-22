@@ -1,7 +1,3 @@
-/**
- * Builds a GitHub API search query from filter parameters
- */
-
 export type QueryBuilderParams = {
   searchTerm?: string
   selectedLabels?: string[]
@@ -14,11 +10,6 @@ export type QueryBuilderParams = {
   selectedLastActivity?: string | null
 }
 
-/**
- * Maps difficulty level to GitHub label search terms
- * Uses only the most common labels that definitely exist on GitHub
- * Each difficulty level uses exclusive labels to avoid overlap
- */
 function getDifficultyLabels(difficulty: string | null): { include: string[], exclude?: string[] } {
   if (!difficulty) return { include: [] }
   
@@ -26,10 +17,8 @@ function getDifficultyLabels(difficulty: string | null): { include: string[], ex
     beginner: {
       include: [
         'good first issue',      // Most common - used by thousands of repos
-        'good-first-issue',      // Hyphenated version (also very common)
+        'good-first-issue',
       ],
-      // No excludes - show all beginner issues even if they have other labels
-      // This ensures maximum results
     },
     intermediate: {
       include: [
@@ -42,18 +31,14 @@ function getDifficultyLabels(difficulty: string | null): { include: string[], ex
       ]
     },
     advanced: {
-      // Search for issues with explicit advanced labels
-      // Using the most common variations found on GitHub
-      // IMPORTANT: These labels must match exactly as they appear on GitHub
       include: [
         'expert',                // Common label for advanced issues
         'advanced',              // Direct label
         'hard',                  // Simple common label
         'difficult',             // Alternative
         'complex',               // Alternative
-        'challenging',           // Alternative
+        'challenging',
       ],
-      // Exclude beginner/intermediate to ensure we only get advanced issues
       exclude: [
         'good first issue',      // Exclude beginner labels
         'good-first-issue',
@@ -67,16 +52,9 @@ function getDifficultyLabels(difficulty: string | null): { include: string[], ex
   return difficultyMap[difficulty] || { include: [] }
 }
 
-/**
- * Maps framework to GitHub search terms
- * Since GitHub issues API doesn't support topic: directly, we search for
- * framework names as general search terms that will match in repo names and descriptions
- */
 function getFrameworkSearch(framework: string | null): string {
   if (!framework) return ''
   
-  // Map frameworks to their primary search terms
-  // GitHub search will match these in repository names, descriptions, and labels
   const frameworkMap: Record<string, string> = {
     react: 'react',
     vue: 'vue',
@@ -97,14 +75,9 @@ function getFrameworkSearch(framework: string | null): string {
   const searchTerm = frameworkMap[framework]
   if (!searchTerm) return ''
   
-  // Return as a simple search term - GitHub will search in repo names, descriptions, etc.
   return searchTerm
 }
 
-/**
- * Maps last activity to GitHub updated date query
- * GitHub API format: updated:>YYYY-MM-DD
- */
 function getLastActivityQuery(activity: string | null): string {
   if (!activity) return ''
   
@@ -123,14 +96,12 @@ function getLastActivityQuery(activity: string | null): string {
         date = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
         break
       case 'active':
-        // For active maintainers, use last month as a proxy
         date = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
         break
       default:
         return ''
     }
     
-    // Format date as YYYY-MM-DD (GitHub API format)
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
@@ -143,26 +114,17 @@ function getLastActivityQuery(activity: string | null): string {
   }
 }
 
-/**
- * Builds a GitHub API search query from filter parameters
- */
 export function buildGitHubQuery(params: QueryBuilderParams): string {
   const parts: string[] = []
   
-  // Always include these base filters
   parts.push('state:open')
   parts.push('type:issue')
   parts.push('no:assignee')
   
-  // Handle difficulty filter FIRST - this is the most important filter
-  // Add it early so it has priority in the search
   if (params.selectedDifficulty) {
     const difficultyConfig = getDifficultyLabels(params.selectedDifficulty)
     
-    // Special handling for advanced filter - use hardcoded query to ensure it works
     if (params.selectedDifficulty === 'advanced') {
-      // Clear any existing parts and build advanced query from scratch
-      // This ensures the query is exactly what we need
       parts.length = 0
       parts.push('state:open')
       parts.push('type:issue')
@@ -173,20 +135,15 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
       parts.push('-label:"first-timers-only"')
       parts.push('-label:"help wanted"')
       parts.push('-label:"help-wanted"')
-      // Don't add other filters for advanced - keep it simple
     } else {
-      // For beginner and intermediate, use normal logic
       if (difficultyConfig.include.length > 0) {
         if (difficultyConfig.include.length === 1) {
-          // Single label - no need for parentheses
           parts.push(`label:"${difficultyConfig.include[0]}"`)
         } else {
-          // Multiple labels - use OR grouping with parentheses
           const includeLabels = difficultyConfig.include.map(label => `label:"${label}"`).join(' OR ')
           parts.push(`(${includeLabels})`)
         }
         
-        // Exclude labels from other difficulty levels
         if (difficultyConfig.exclude && difficultyConfig.exclude.length > 0) {
           difficultyConfig.exclude.forEach(label => {
             parts.push(`-label:"${label}"`)
@@ -196,12 +153,10 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
     }
   }
   
-  // Add search term if provided (skip for advanced to keep query simple)
   if (params.selectedDifficulty !== 'advanced' && params.searchTerm && params.searchTerm.trim()) {
     parts.push(params.searchTerm.trim())
   }
   
-  // Handle framework filter (add as search term) - skip for advanced
   if (params.selectedDifficulty !== 'advanced' && params.selectedFramework) {
     const frameworkQuery = getFrameworkSearch(params.selectedFramework)
     if (frameworkQuery) {
@@ -209,13 +164,10 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
     }
   }
   
-  // Handle language filter - skip for advanced to keep query simple
   if (params.selectedDifficulty !== 'advanced' && params.selectedLanguage) {
     parts.push(`language:${params.selectedLanguage}`)
   }
   
-  // Handle categories (issue types) - these are labels
-  // Skip if difficulty filter is selected to avoid conflicts
   if (!params.selectedDifficulty && params.selectedCategories && params.selectedCategories.length > 0 && !params.selectedCategories.includes('all')) {
     const categoryQueries = params.selectedCategories.map((cat) => `label:"${cat}"`)
     if (categoryQueries.length === 1) {
@@ -225,21 +177,16 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
     }
   }
   
-  // Handle type filter (if not already in categories)
-  // Skip if difficulty filter is selected to avoid conflicts
   if (!params.selectedDifficulty && params.selectedType) {
-    // Check if type is already in selectedCategories to avoid duplication
     if (!params.selectedCategories || !params.selectedCategories.includes(params.selectedType)) {
       parts.push(`label:"${params.selectedType}"`)
     }
   }
   
-  // Handle legacy labels
   if (params.selectedLabels && params.selectedLabels.length > 0) {
     params.selectedLabels.forEach((l) => parts.push(`label:"${l}"`))
   }
   
-  // Handle last activity filter - skip for advanced to keep query simple
   if (params.selectedDifficulty !== 'advanced' && params.selectedLastActivity) {
     const activityQuery = getLastActivityQuery(params.selectedLastActivity)
     if (activityQuery) {
@@ -249,8 +196,6 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
   
   const query = parts.join(' ')
   
-  // If query is too restrictive (only base filters), add a default to show issues
-  // This ensures we always show some results, but only if no other filters are applied
   const hasAnyFilter = params.selectedDifficulty || 
                        params.selectedType || 
                        params.selectedFramework || 
@@ -261,16 +206,11 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
                        (params.selectedLabels && params.selectedLabels.length > 0) ||
                        (params.searchTerm && params.searchTerm.trim())
   
-  // IMPORTANT: Never override the query if a difficulty filter is selected
-  // This ensures advanced filter works correctly
   if (!hasAnyFilter && query === 'state:open type:issue no:assignee') {
-    // Default: show good first issues and help wanted
     return 'state:open type:issue no:assignee (label:"good first issue" OR label:"help wanted")'
   }
   
-  // Final verification and fix for advanced filter
   if (params.selectedDifficulty === 'advanced') {
-    // For advanced, ALWAYS use the hardcoded query to ensure it works
     const advancedQuery = 'state:open type:issue no:assignee (label:"expert" OR label:"advanced" OR label:"hard" OR label:"difficult" OR label:"complex" OR label:"challenging") -label:"good first issue" -label:"good-first-issue" -label:"first-timers-only" -label:"help wanted" -label:"help-wanted"'
     return advancedQuery
   }

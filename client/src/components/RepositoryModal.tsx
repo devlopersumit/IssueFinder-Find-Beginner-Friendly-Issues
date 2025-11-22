@@ -9,7 +9,6 @@ type RepositoryModalProps = {
 const RepositoryModal: React.FC<RepositoryModalProps> = ({ repoFullName, onClose }) => {
   useEffect(() => {
     if (repoFullName) {
-      // Prevent body scroll when modal is open
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''

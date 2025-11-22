@@ -16,7 +16,6 @@ const AppContent: React.FC = () => {
   const onSubmitSearch = () => {
     if (searchTerm.trim()) {
       submitSearch(searchTerm.trim())
-      // Navigate to search results page
       navigate('/search')
     }
   }

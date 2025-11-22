@@ -60,7 +60,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const newTheme = prevTheme === 'light' ? 'dark' : 'light'
       const root = document.documentElement
       
-      // Apply immediately
       if (newTheme === 'dark') {
         root.classList.add('dark')
         root.setAttribute('data-theme', 'dark')

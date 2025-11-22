@@ -21,13 +21,11 @@ const HomePage: React.FC = () => {
   const [selectedLicense, setSelectedLicense] = useState<string | null>(null)
   const [selectedNaturalLanguages, setSelectedNaturalLanguages] = useState<NaturalLanguage[]>([])
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false)
-  // Advanced filters
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null)
   const [selectedLastActivity, setSelectedLastActivity] = useState<string | null>(null)
 
-  // Auto-detect browser language and apply filter automatically (silently)
   useEffect(() => {
     const browserLang = getBrowserLanguage()
     setSelectedNaturalLanguages([browserLang])

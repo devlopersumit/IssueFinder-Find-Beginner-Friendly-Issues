@@ -32,15 +32,12 @@ const ISSUE_CATEGORIES = [
   { key: 'documentation', label: 'Documentation' },
 ]
 
-// Expanded language list (includes popular + common others)
 const POPULAR_LANGUAGES = [
   { key: null, label: 'Any Language' },
-  // Web
   { key: 'javascript', label: 'JavaScript' },
   { key: 'typescript', label: 'TypeScript' },
   { key: 'html', label: 'HTML' },
   { key: 'css', label: 'CSS' },
-  // General purpose
   { key: 'python', label: 'Python' },
   { key: 'java', label: 'Java' },
   { key: 'c', label: 'C' },
@@ -57,11 +54,9 @@ const POPULAR_LANGUAGES = [
   { key: 'objective-c', label: 'Objective-C' },
   { key: 'shell', label: 'Shell' },
   { key: 'bash', label: 'Bash' },
-  // Data/Science
   { key: 'r', label: 'R' },
   { key: 'julia', label: 'Julia' },
   { key: 'matlab', label: 'MATLAB' },
-  // Scripting/others
   { key: 'perl', label: 'Perl' },
   { key: 'lua', label: 'Lua' },
   { key: 'haskell', label: 'Haskell' },
@@ -97,7 +92,6 @@ const ISSUE_TYPES = [
   { key: 'testing', label: 'Testing' },
 ]
 
-// Most popular frameworks only
 const POPULAR_FRAMEWORKS = [
   { key: null, label: 'Any Framework' },
   { key: 'react', label: 'React' },
