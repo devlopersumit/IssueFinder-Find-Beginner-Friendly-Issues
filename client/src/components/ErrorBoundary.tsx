@@ -10,6 +10,16 @@ type ErrorBoundaryState = {
   error: Error | null
 }
 
+// Helper to check if we're in development mode
+const isDevelopment = (): boolean => {
+  try {
+    // @ts-expect-error - import.meta.env is available in Vite
+    return import.meta.env?.DEV === true || import.meta.env?.MODE === 'development'
+  } catch {
+    return false
+  }
+}
+
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props)
@@ -22,7 +32,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
+    if (isDevelopment()) {
       console.error('ErrorBoundary caught an error:', error, errorInfo)
     }
     // In production, you could log to an error reporting service
@@ -57,7 +67,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               We're sorry, but something unexpected happened. Please try refreshing the page.
             </p>
-            {this.state.error && process.env.NODE_ENV === 'development' && (
+            {this.state.error && isDevelopment() && (
               <details className="mt-4 text-left">
                 <summary className="cursor-pointer text-xs font-medium text-gray-500 dark:text-gray-400">
                   Error details (development only)
