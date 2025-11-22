@@ -1,10 +1,12 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react'
+import React, { useEffect, useState, useMemo, useRef, memo } from 'react'
 import { useFetchIssues } from '../hooks/useFetchIssues'
 import DifficultyBadge from './DifficultyBadge'
 import { detectDifficulty } from '../utils/difficulty'
 import type { NaturalLanguage } from '../utils/languageDetection'
 import { filterByLanguage } from '../utils/languageDetection'
 import { fetchRepositoryLanguages } from '../utils/repoLanguages'
+import { useSavedIssues } from '../hooks/useSavedIssues'
+import { LoadingProgress } from './LoadingProgress'
 
 type IssueListProps = {
   className?: string
@@ -15,10 +17,23 @@ type IssueListProps = {
 const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLanguageFilter = [] }) => {
   const [page, setPage] = useState<number>(1)
   const perPage = 20
-  const [items, setItems] = useState<any[]>([])
+  type IssueItem = {
+    id: number
+    html_url: string
+    title: string
+    state: 'open' | 'closed'
+    number: number
+    repository_url: string
+    labels: Array<{ name?: string; color?: string }>
+    created_at: string
+    comments?: number
+  }
+  
+  const [items, setItems] = useState<IssueItem[]>([])
   const [repoLanguages, setRepoLanguages] = useState<Record<string, string[]>>({})
   const languagesFetchedRef = useRef<Set<string>>(new Set())
   const { data, isLoading, error } = useFetchIssues(query, page, perPage)
+  const { saveIssue, removeIssue, isSaved } = useSavedIssues()
 
   useEffect(() => {
     setPage(1)
@@ -186,6 +201,11 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
     <section className={`relative w-full max-w-full overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition-colors duration-300 dark:border-gray-800 dark:bg-gray-900 ${className}`}>
       <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-48 max-w-4xl rounded-b-[4rem] bg-gradient-to-b from-emerald-200/40 via-slate-100/50 to-transparent dark:from-emerald-500/10 dark:via-gray-800/10" aria-hidden="true" />
       <div className="relative p-4 sm:p-6 md:p-8">
+        {isLoading && displayItems.length === 0 && (
+          <div className="mb-4">
+            <LoadingProgress isLoading={isLoading} />
+          </div>
+        )}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Live issue feed</p>
@@ -220,8 +240,27 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
             <svg className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <h3 className="mt-3 text-sm font-semibold text-slate-900 dark:text-slate-100">No issues found</h3>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Try removing some filters, changing the language, or searching with different keywords.</p>
+            <h3 className="mt-3 text-lg font-semibold text-slate-900 dark:text-slate-100">We couldn't find any issues matching your criteria</h3>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Try removing some filters or search for:
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {['good first issue', 'help wanted', 'documentation', 'bug'].map((suggestion) => (
+                <button
+                  key={suggestion}
+                  onClick={() => {
+                    // This would need to be connected to filter state
+                    window.location.href = `/?search=${encodeURIComponent(suggestion)}`
+                  }}
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 dark:border-gray-600 dark:bg-gray-800 dark:text-slate-300 dark:hover:border-gray-500 dark:hover:bg-gray-700"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+            <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+              New issues are added every hour, check back soon!
+            </p>
           </div>
         )}
 
@@ -230,9 +269,23 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
             <svg className="mx-auto h-12 w-12 text-red-400 dark:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 className="mt-3 text-sm font-semibold text-red-900 dark:text-red-100">Unable to load issues</h3>
-            <p className="mt-1 text-sm text-red-700 dark:text-red-300">{error.message}</p>
-            <p className="mt-3 text-xs text-red-600 dark:text-red-400">Try refreshing the page or simplifying your search filters.</p>
+            <h3 className="mt-3 text-lg font-semibold text-red-900 dark:text-red-100">Unable to load issues</h3>
+            <p className="mt-2 text-sm text-red-700 dark:text-red-300">{error.message}</p>
+            <div className="mt-4 space-y-2">
+              <p className="text-xs font-semibold text-red-800 dark:text-red-200">What you can do:</p>
+              <ul className="text-xs text-red-700 dark:text-red-300 space-y-1">
+                <li>• Try refreshing the page</li>
+                <li>• Simplify your search filters</li>
+                <li>• Check your internet connection</li>
+                <li>• Wait a moment and try again</li>
+              </ul>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+            >
+              Retry
+            </button>
           </div>
         )}
 
@@ -260,31 +313,69 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
                   </div>
                 </article>
               ))
-            : displayItems.map((issue: any) => {
+            : displayItems.map((issue: IssueItem) => {
                 const repo = issue.repository_url?.split('/').slice(-2).join('/')
                 const difficulty = detectDifficulty(issue.labels || [])
                 const repoLangs = repoLanguages[issue.repository_url] || []
                 const primaryLanguage = repoLangs.length > 0 ? repoLangs[0] : null
 
+                const saved = isSaved(issue.id)
+                
                 return (
-                  <a
+                  <div
                     key={issue.id}
-                    href={issue.html_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group flex h-full w-full flex-col rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
+                    className="group flex h-full w-full flex-col rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-md focus-within:ring-2 focus-within:ring-slate-400 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">{repo}</p>
                         <p className="text-[11px] text-slate-400 dark:text-slate-500">Issue #{issue.number}</p>
                       </div>
-                      <DifficultyBadge difficulty={difficulty} />
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            if (saved) {
+                              removeIssue(issue.id)
+                            } else {
+                              saveIssue({
+                                id: issue.id,
+                                html_url: issue.html_url,
+                                title: issue.title,
+                                repository_url: issue.repository_url,
+                                number: issue.number,
+                                created_at: issue.created_at,
+                              })
+                            }
+                          }}
+                          className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-gray-700 dark:hover:text-slate-300"
+                          aria-label={saved ? 'Remove from saved' : 'Save for later'}
+                          title={saved ? 'Remove from saved' : 'Save for later'}
+                        >
+                          {saved ? (
+                            <svg className="h-5 w-5 fill-current text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                            </svg>
+                          )}
+                        </button>
+                        <DifficultyBadge difficulty={difficulty} />
+                      </div>
                     </div>
 
-                    <h3 className="mt-3 w-full text-sm font-semibold leading-snug text-slate-900 transition group-hover:text-slate-600 dark:text-slate-100 dark:group-hover:text-slate-200 sm:text-base">
+                    <a
+                      href={issue.html_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 w-full text-sm font-semibold leading-snug text-slate-900 transition hover:text-slate-600 dark:text-slate-100 hover:dark:text-slate-200 sm:text-base"
+                      aria-label={`View issue ${issue.number}: ${issue.title}`}
+                    >
                       {issue.title}
-                    </h3>
+                    </a>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-300 sm:gap-3">
                       <span className="inline-flex items-center gap-1">
@@ -318,7 +409,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
 
                     {issue.labels && issue.labels.length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-1">
-                        {issue.labels.slice(0, 3).map((l: any, i: number) => {
+                        {issue.labels.slice(0, 3).map((l, i: number) => {
                           const labelLower = l.name.toLowerCase()
                           const icon = getLabelIcon(l.name || '')
                           const dotColors: Record<string, string> = {
@@ -349,7 +440,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
                         )}
                       </div>
                     )}
-                  </a>
+                  </div>
                 )
               })}
         </div>
@@ -361,6 +452,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 dark:border-emerald-900/40 dark:bg-gray-800 dark:text-emerald-300 dark:hover:border-emerald-700 dark:hover:text-emerald-200"
               disabled={!hasPrevPage || isLoading}
+              aria-label="Go to previous page"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -382,6 +474,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 dark:border-emerald-900/40 dark:bg-gray-800 dark:text-emerald-300 dark:hover:border-emerald-700 dark:hover:text-emerald-200"
               disabled={!hasNextPage || isLoading}
+              aria-label="Go to next page"
             >
               Next
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
