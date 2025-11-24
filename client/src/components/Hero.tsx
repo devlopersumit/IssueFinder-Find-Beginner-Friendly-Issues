@@ -62,12 +62,12 @@ const Hero: React.FC = () => {
             </div>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
-              <a
-                href="#catalog"
+              <Link
+                to="/categories"
                 className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-slate-900/10 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-slate-100 dark:text-gray-900 dark:hover:bg-slate-200"
               >
-                Explore the catalog
-              </a>
+                Explore categories
+              </Link>
               <Link
                 to="/beginner-guide"
                 className="inline-flex items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 px-6 py-3 text-base font-semibold text-emerald-700 transition-colors duration-200 hover:border-emerald-400 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/50"
