@@ -3,10 +3,12 @@ import { Routes, Route, useNavigate } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import HomePage from './pages/HomePage'
+import IssuesPage from './pages/IssuesPage'
 import BountyIssuesPage from './pages/BountyIssuesPage'
 import SearchResultsPage from './pages/SearchResultsPage'
 import RepositoriesPage from './pages/RepositoriesPage'
 import BeginnerGuidePage from './pages/BeginnerGuidePage'
+import CategoriesPage from './pages/CategoriesPage'
 import { useSearch } from './contexts/SearchContext'
 
 const AppContent: React.FC = () => {
@@ -30,10 +32,12 @@ const AppContent: React.FC = () => {
       />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/issues" element={<IssuesPage />} />
         <Route path="/bounty" element={<BountyIssuesPage />} />
         <Route path="/search" element={<SearchResultsPage />} />
         <Route path="/repositories" element={<RepositoriesPage />} />
         <Route path="/beginner-guide" element={<BeginnerGuidePage />} />
+        <Route path="/categories" element={<CategoriesPage />} />
       </Routes>
       <Footer
         githubUrl="https://github.com/devlopersumit"
