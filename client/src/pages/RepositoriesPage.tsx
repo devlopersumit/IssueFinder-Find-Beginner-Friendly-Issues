@@ -1,12 +1,20 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import FiltersPanel from '../components/FiltersPanel'
 import RepositoryList from '../components/RepositoryList'
 
 const RepositoriesPage: React.FC = () => {
+  const [searchParams] = useSearchParams()
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
   const [selectedLicense, setSelectedLicense] = useState<string | null>(null)
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false)
+
+  useEffect(() => {
+    const languageParam = searchParams.get('language')
+    if (languageParam) {
+      setSelectedLanguage(languageParam)
+    }
+  }, [searchParams])
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">

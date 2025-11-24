@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import FiltersPanel from '../components/FiltersPanel'
 import IssueList from '../components/IssueList'
 import MobileCategoryTabs from '../components/MobileCategoryTabs'
@@ -9,6 +10,7 @@ import { buildGitHubQuery } from '../utils/queryBuilder'
 
 const IssuesPage: React.FC = () => {
   const { submittedSearch } = useSearch()
+  const [searchParams] = useSearchParams()
   const [selectedLabels, setSelectedLabels] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
@@ -23,6 +25,19 @@ const IssuesPage: React.FC = () => {
     const browserLang = getBrowserLanguage()
     setSelectedNaturalLanguages([browserLang])
   }, [])
+
+  useEffect(() => {
+    const categoryParam = searchParams.get('category')
+    const difficultyParam = searchParams.get('difficulty')
+    
+    if (categoryParam) {
+      setSelectedCategories([categoryParam])
+    }
+    
+    if (difficultyParam) {
+      setSelectedDifficulty(difficultyParam)
+    }
+  }, [searchParams])
 
   const toggleLabel = (label: string) => {
     setSelectedLabels((prev) => (prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]))
