@@ -3,7 +3,6 @@ import { getDailyCached, setDailyCached } from '../utils/requestCache'
 import { 
   isRateLimited, 
   updateRateLimitInfo, 
-  waitForRateLimitReset,
   getRateLimitResetTime 
 } from '../utils/rateLimitManager'
 
@@ -44,7 +43,7 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<Error | null>(null)
   const abortRef = useRef<AbortController | null>(null)
-  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const retryTimeoutRef = useRef<number | null>(null)
 
   const cacheKey = useMemo(() => `issues_${query}_${page}_${perPage}`, [query, page, perPage])
 
