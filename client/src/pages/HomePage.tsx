@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { validateGitHubUsername } from '../utils/security'
 import Hero from '../components/Hero'
 
 const ProfileSearchForm: React.FC = () => {
@@ -11,8 +12,6 @@ const ProfileSearchForm: React.FC = () => {
     e.preventDefault()
     setError(null)
     
-    // Import validation function
-    const { validateGitHubUsername } = require('../utils/security')
     const validation = validateGitHubUsername(username)
     
     if (!validation.valid) {
