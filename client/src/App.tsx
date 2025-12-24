@@ -10,6 +10,7 @@ import RepositoriesPage from './pages/RepositoriesPage'
 import BeginnerGuidePage from './pages/BeginnerGuidePage'
 import CategoriesPage from './pages/CategoriesPage'
 import DashboardPage from './pages/DashboardPage'
+import ContributorProfile from './pages/ContributorProfile'
 import { useSearch } from './contexts/SearchContext'
 
 const AppContent: React.FC = () => {
@@ -40,6 +41,7 @@ const AppContent: React.FC = () => {
         <Route path="/beginner-guide" element={<BeginnerGuidePage />} />
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/contributor/:username" element={<ContributorProfile />} />
       </Routes>
       <Footer
         githubUrl="https://github.com/devlopersumit"
