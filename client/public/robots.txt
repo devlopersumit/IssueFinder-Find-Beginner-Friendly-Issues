@@ -1,0 +1,10 @@
+# robots.txt for IssueFinder
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /contributor/
+
+# Sitemap
+Sitemap: https://issuefinder.fun/sitemap.xml
+
