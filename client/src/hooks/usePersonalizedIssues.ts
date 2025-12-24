@@ -55,7 +55,18 @@ export function usePersonalizedIssues(
     setProfileError(null)
 
     try {
-      const fetchedProfile = await fetchUserProfile(username.trim())
+      // Validate username before fetching
+      const { validateGitHubUsername, sanitizeInput } = await import('../utils/security')
+      const validation = validateGitHubUsername(username)
+      
+      if (!validation.valid) {
+        setProfileError(new Error(validation.error || 'Invalid GitHub username'))
+        setIsLoadingProfile(false)
+        return
+      }
+
+      const sanitizedUsername = sanitizeInput(username.trim())
+      const fetchedProfile = await fetchUserProfile(sanitizedUsername)
       if (fetchedProfile.username) {
         setProfile(fetchedProfile as UserProfile)
       } else {
