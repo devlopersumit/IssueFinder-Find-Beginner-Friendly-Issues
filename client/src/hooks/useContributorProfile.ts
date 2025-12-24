@@ -3,7 +3,6 @@ import {
   fetchContributorData, 
   buildContributionTimeline,
   type ContributorStats,
-  type Contribution,
   type ContributionTimelineItem
 } from '../utils/contributionTracker'
 
