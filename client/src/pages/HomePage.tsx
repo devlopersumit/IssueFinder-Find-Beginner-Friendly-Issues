@@ -79,6 +79,44 @@ const HomePage: React.FC = () => {
     <>
       <Hero />
       <main className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
+        {/* Developer Dashboard CTA */}
+        <section className="mb-16">
+          <div className="relative rounded-2xl overflow-hidden group">
+            {/* Animated gradient border */}
+            <div className="absolute inset-0 rounded-2xl p-[2px]">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500 dark:from-emerald-500 dark:via-blue-400 dark:to-purple-400 opacity-75 dark:opacity-60 bg-[length:200%_100%] animate-gradient-border"></div>
+            </div>
+            {/* Glow effect */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500 dark:from-emerald-500 dark:via-blue-400 dark:to-purple-400 rounded-2xl opacity-20 dark:opacity-10 blur-xl animate-pulse-slow"></div>
+            
+            <div className="relative rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50 to-blue-50 dark:from-emerald-900/20 dark:via-teal-900/20 dark:to-blue-900/20 p-8 sm:p-12 text-center z-10 backdrop-blur-sm">
+              <div className="inline-flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">New Feature</span>
+              </div>
+              
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                Developer Dashboard
+              </h2>
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+                Experience our terminal-style interface with live contributions feed and AI-powered issue matching engine
+              </p>
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500 px-8 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 dark:shadow-emerald-500/20 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/40 dark:hover:shadow-emerald-500/30"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Open Developer Dashboard
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* Problems We Solve Section */}
         <section className="mb-16">
           <div className="text-center mb-12">
