@@ -1,4 +1,5 @@
 import React from 'react'
+import { sanitizeUrl, isGitHubUrl } from '../utils/security'
 import type { ContributionTimelineItem } from '../utils/contributionTracker'
 
 type ContributionTimelineProps = {
@@ -85,7 +86,6 @@ const ContributionTimeline: React.FC<ContributionTimelineProps> = ({ timeline, c
             <div className="space-y-2">
               {item.contributions.slice(0, 3).map((contribution) => {
                 // Validate URL before rendering
-                const { sanitizeUrl, isGitHubUrl } = require('../utils/security')
                 const safeUrl = sanitizeUrl(contribution.url) && isGitHubUrl(contribution.url) 
                   ? contribution.url 
                   : '#'
