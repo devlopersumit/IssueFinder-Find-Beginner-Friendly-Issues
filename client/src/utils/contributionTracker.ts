@@ -216,7 +216,6 @@ export async function fetchContributorData(username: string): Promise<Contributo
     const { currentStreak, longestStreak } = calculateStreaks(sortedDates)
 
     // Get date ranges
-    const dates = sortedDates.map(d => new Date(d).getTime())
     const firstContributionDate = sortedDates[0] || new Date().toISOString()
     const lastContributionDate = sortedDates[sortedDates.length - 1] || new Date().toISOString()
 
