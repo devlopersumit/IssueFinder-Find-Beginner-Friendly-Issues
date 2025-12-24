@@ -1,6 +1,71 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import Hero from '../components/Hero'
+
+const ProfileSearchForm: React.FC = () => {
+  const [username, setUsername] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    
+    // Import validation function
+    const { validateGitHubUsername } = require('../utils/security')
+    const validation = validateGitHubUsername(username)
+    
+    if (!validation.valid) {
+      setError(validation.error || 'Invalid username')
+      return
+    }
+
+    // Sanitize username before navigation
+    const sanitized = username.trim().toLowerCase()
+    navigate(`/contributor/${encodeURIComponent(sanitized)}`)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-6">
+      <div className="flex gap-2">
+        <div className="flex-1 relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 2C5.477 2 2 5.484 2 10.017c0 4.424 2.865 8.178 6.839 9.504.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.833.091-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.952 0-1.093.39-1.988 1.03-2.688-.104-.253-.447-1.27.098-2.647 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.748-1.026 2.748-1.026.546 1.377.203 2.394.1 2.647.64.7 1.028 1.595 1.028 2.688 0 3.848-2.338 4.696-4.566 4.945.359.309.679.92.679 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.481A10.019 10.019 0 0020 10.017C20 5.484 15.522 2 10 2z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Enter GitHub username"
+            className="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={!username.trim()}
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/25 dark:shadow-blue-500/20 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/40 dark:hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          View Profile
+        </button>
+      </div>
+      {error && (
+        <p className="mt-2 text-xs text-red-600 dark:text-red-400 text-center">
+          {error}
+        </p>
+      )}
+      {!error && (
+        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
+          Enter your GitHub username to see your contribution impact
+        </p>
+      )}
+    </form>
+  )
+}
 
 const HomePage: React.FC = () => {
   const problems = [
@@ -79,6 +144,47 @@ const HomePage: React.FC = () => {
     <>
       <Hero />
       <main className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
+        {/* Contribution Impact Tracker CTA */}
+        <section className="mb-16">
+          <div className="relative rounded-2xl overflow-hidden group">
+            {/* Animated gradient border */}
+            <div className="absolute inset-0 rounded-2xl p-[2px]">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500 dark:from-emerald-500 dark:via-blue-400 dark:to-purple-400 opacity-75 dark:opacity-60 bg-[length:200%_100%] animate-gradient-border"></div>
+            </div>
+            {/* Glow effect */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500 dark:from-emerald-500 dark:via-blue-400 dark:to-purple-400 rounded-2xl opacity-20 dark:opacity-10 blur-xl animate-pulse-slow"></div>
+            
+            <div className="relative rounded-2xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 p-8 sm:p-12 text-center z-10 backdrop-blur-sm">
+              <div className="inline-flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">New Feature</span>
+              </div>
+              
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                Track Your Contribution Impact
+              </h2>
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+                Get your personalized contribution profile with impact score, achievements, and shareable cards. Showcase your open source journey!
+              </p>
+              <ProfileSearchForm />
+              <div className="mt-6">
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-blue-600 dark:border-blue-500 bg-white dark:bg-gray-900 px-8 py-3 text-base font-semibold text-blue-600 dark:text-blue-400 transition-all duration-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:scale-105"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  Developer Dashboard
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Developer Dashboard CTA */}
         <section className="mb-16">
           <div className="relative rounded-2xl overflow-hidden group">
