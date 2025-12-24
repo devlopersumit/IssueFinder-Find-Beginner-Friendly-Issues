@@ -4,6 +4,8 @@ A modern, full-stack web application that helps developers discover the best Git
 
 **Perfect for beginners!** Includes a comprehensive step-by-step guide to help you make your first contribution, find beginner-friendly issues, and navigate the open source world with confidence.
 
+**New Features:** Live contribution feed, AI-powered issue matching engine, and contribution impact tracker with shareable profiles!
+
 ## 🚀 Live Demo
 
 **[View Live Application](https://issuefinder.fun)**
@@ -54,6 +56,38 @@ A modern, full-stack web application that helps developers discover the best Git
 - **Repository Details Modal**: Deep-dive into repository information
 - **Back to Home Navigation**: Easy navigation back to homepage
 
+### 🔥 Live Contribution Feed
+- **Real-Time Activity**: See global open source contributions as they happen
+- **Live Updates**: Auto-refreshes every 30 seconds to show the latest activity
+- **Multiple Event Types**: Track commits, pull requests, issues, and repository creation
+- **Contributor Profiles**: View avatars and usernames of active contributors
+- **Repository Tracking**: See which repositories are most active
+- **Statistics Dashboard**: View counts of commits, PRs, issues, and unique contributors
+- **Trending Repositories**: Discover the most active repositories in real-time
+- **Terminal-Style UI**: Developer-friendly interface with GitHub-inspired design
+- **Theme-Aware**: Seamlessly adapts to light and dark modes
+
+### 🤖 AI-Powered Issue Matching Engine
+- **Profile Analysis**: Analyzes your GitHub profile to understand your skills and interests
+- **Personalized Recommendations**: Get issues matched to your programming languages and repositories
+- **Match Scoring**: See how well each issue matches your profile (0-100% match score)
+- **Match Reasons**: Understand why issues are recommended (language match, repository familiarity, etc.)
+- **Smart Filtering**: Automatically filters issues based on your expertise
+- **No Authentication Required**: Works with just your GitHub username
+- **Real-Time Matching**: Instant recommendations as you enter your username
+- **Terminal-Style Interface**: Developer-centric UI with match indicators and badges
+
+### 📊 Contribution Impact Tracker
+- **Impact Score**: Get a personalized impact score (0-100) based on your contributions
+- **Contribution Statistics**: Track total contributions, repositories, languages, and more
+- **Achievement Badges**: Earn badges for milestones and achievements
+- **Contribution Streaks**: Track your daily contribution streaks
+- **Visual Timeline**: See your contribution history in a beautiful timeline view
+- **Shareable Profile Cards**: Generate and share beautiful profile cards on social media
+- **Public Profile Pages**: Create shareable profile URLs (e.g., `/contributor/username`)
+- **Comprehensive Metrics**: View detailed breakdowns of your open source impact
+- **Mobile-Responsive**: Fully optimized for all devices
+
 ### 🎨 User Experience
 - **Dark Mode**: Seamless dark/light theme switching with system preference detection
 - **Responsive Design**: Fully optimized for mobile, tablet, and desktop
@@ -103,9 +137,13 @@ A modern, full-stack web application that helps developers discover the best Git
 - **Nodemon** - Development server auto-reload
 
 ### APIs
-- **GitHub REST API** - Search repositories and issues
+- **GitHub REST API** - Comprehensive integration with multiple endpoints
+  - **Search API**: Repositories and issues search
+  - **Events API**: Real-time public events and contributions
+  - **Users API**: User profiles and repository data
+  - **Issues API**: Issue details and metadata
   - No authentication required for public data
-  - Rate limits handled gracefully
+  - Rate limits handled gracefully with smart caching
 
 ## 📁 Project Structure
 
@@ -123,13 +161,21 @@ IssueHub/
 │   │   │   ├── RepositoryList.tsx
 │   │   │   ├── RepositoryModal.tsx
 │   │   │   ├── DifficultyBadge.tsx
+│   │   │   ├── LiveContributionFeed.tsx
+│   │   │   ├── PersonalizedIssues.tsx
+│   │   │   ├── ImpactMetrics.tsx
+│   │   │   ├── ContributionTimeline.tsx
+│   │   │   ├── ShareableCard.tsx
+│   │   │   ├── AchievementBadges.tsx
 │   │   │   └── Footer.tsx
 │   │   ├── pages/         # Page components
 │   │   │   ├── HomePage.tsx
 │   │   │   ├── BountyIssuesPage.tsx
 │   │   │   ├── BeginnerGuidePage.tsx
 │   │   │   ├── SearchResultsPage.tsx
-│   │   │   └── RepositoriesPage.tsx
+│   │   │   ├── RepositoriesPage.tsx
+│   │   │   ├── DashboardPage.tsx
+│   │   │   └── ContributorProfile.tsx
 │   │   ├── contexts/      # React contexts
 │   │   │   ├── ThemeContext.tsx
 │   │   │   └── SearchContext.tsx
@@ -137,12 +183,18 @@ IssueHub/
 │   │   │   ├── useFetchIssues.ts
 │   │   │   ├── useFetchRepositories.ts
 │   │   │   ├── useFetchRepositoryDetails.ts
-│   │   │   └── useSearchRepository.ts
+│   │   │   ├── useSearchRepository.ts
+│   │   │   ├── useLiveContributions.ts
+│   │   │   ├── usePersonalizedIssues.ts
+│   │   │   └── useContributorProfile.ts
 │   │   ├── utils/         # Utility functions
 │   │   │   ├── queryBuilder.ts
 │   │   │   ├── difficulty.ts
 │   │   │   ├── languageDetection.ts
-│   │   │   └── repoLanguages.ts
+│   │   │   ├── repoLanguages.ts
+│   │   │   ├── issueMatcher.ts
+│   │   │   ├── contributionTracker.ts
+│   │   │   └── security.ts
 │   │   ├── App.tsx        # Main application component
 │   │   ├── main.tsx       # Application entry point
 │   │   └── index.css      # Global styles
@@ -276,6 +328,32 @@ node app.js
 - **Adaptive Layout**: Grid and flexbox layouts
 - **Breakpoint Optimization**: Tailored layouts for sm, md, lg, xl screens
 
+### Live Contribution Feed
+- **GitHub Events API**: Real-time integration with GitHub's public events endpoint
+- **Auto-Refresh**: Automatic updates every 30 seconds
+- **Event Filtering**: Filters and displays relevant contribution events
+- **Statistics Calculation**: Real-time stats for commits, PRs, issues, and contributors
+- **Repository Tracking**: Identifies trending repositories from live activity
+- **Performance Optimized**: Efficient data fetching and rendering
+
+### AI-Powered Issue Matching
+- **Profile Fetching**: Retrieves user profile data from GitHub API
+- **Language Analysis**: Extracts programming languages from user repositories
+- **Repository Matching**: Matches issues to user's familiar repositories
+- **Scoring Algorithm**: Calculates match scores based on multiple factors
+- **Reason Generation**: Provides explanations for each match recommendation
+- **Input Validation**: Secure username validation and sanitization
+
+### Contribution Impact Tracker
+- **GitHub API Integration**: Fetches comprehensive contribution data
+- **Impact Calculation**: Advanced algorithm to calculate contribution impact score
+- **Timeline Generation**: Builds chronological timeline of contributions
+- **Achievement System**: Tracks and awards badges for milestones
+- **Streak Tracking**: Monitors daily contribution streaks
+- **Shareable Cards**: Generates visual cards for social media sharing
+- **URL Routing**: Dynamic routing for public profile pages
+- **Security**: Input validation and URL sanitization for safe navigation
+
 ## 🌟 Use Cases
 
 - **Beginner Developers**: 
@@ -283,17 +361,26 @@ node app.js
   - Find "good first issue" tags to start contributing
   - Language-specific filtering for all skill levels
   - Learn the complete contribution workflow
+  - Get AI-powered personalized issue recommendations
+  - Track your contribution impact and showcase achievements
 - **Open Source Contributors**: 
   - Discover projects in your tech stack
   - Find bounty issues with real rewards
   - Filter by difficulty, type, and framework
+  - Watch live contributions from the global community
+  - Get personalized issue matches based on your skills
+  - Track and share your contribution impact
 - **Project Maintainers**: 
   - Find repositories that need help
   - Discover contributors looking for projects
+  - Monitor live contribution activity
+  - Identify trending repositories and active contributors
 - **Learning**: 
   - Explore codebases and coding patterns
   - Learn from real-world open source projects
   - Understand contribution workflows
+  - See real-time examples of contributions
+  - Get matched with issues that match your learning goals
 
 ## 🤝 Contributing
 
@@ -328,18 +415,23 @@ This project is licensed under the ISC License.
 
 - **Languages**: TypeScript, JavaScript, HTML, CSS
 - **Dependencies**: 50+ packages
-- **Components**: 10+ reusable components
-- **Pages**: 5 main pages (Home, Bounty Issues, Beginner Guide, Search, Repositories)
-- **Hooks**: 4 custom React hooks
-- **API Endpoints**: GitHub REST API
+- **Components**: 15+ reusable components
+- **Pages**: 7 main pages (Home, Bounty Issues, Beginner Guide, Search, Repositories, Dashboard, Contributor Profile)
+- **Hooks**: 7 custom React hooks
+- **API Endpoints**: GitHub REST API (Issues, Repositories, Events, Users)
 - **Build Size**: Optimized for production
+- **Security**: Input validation, XSS prevention, URL sanitization, security headers
 - **Features**: 
   - Issue discovery with advanced filtering
   - Bounty issues with comprehensive fetching
   - Beginner guide with step-by-step instructions
   - Repository explorer with detailed views
+  - Live contribution feed with real-time updates
+  - AI-powered personalized issue matching
+  - Contribution impact tracker with shareable profiles
   - Full pagination support
   - Dark mode and responsive design
+  - Terminal-style developer dashboard
 
 ---
 
