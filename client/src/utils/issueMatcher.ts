@@ -152,12 +152,23 @@ export function matchIssues(
  * Fetch user profile from GitHub (if username provided)
  */
 export async function fetchUserProfile(username: string): Promise<Partial<UserProfile>> {
+  // Validate and sanitize username
+  const { validateGitHubUsername, sanitizeInput } = await import('./security')
+  const validation = validateGitHubUsername(username)
+  
+  if (!validation.valid) {
+    throw new Error(validation.error || 'Invalid GitHub username')
+  }
+
+  const sanitizedUsername = sanitizeInput(username.trim())
+  const encodedUsername = encodeURIComponent(sanitizedUsername)
+
   try {
     const [userResponse, reposResponse] = await Promise.all([
-      fetch(`https://api.github.com/users/${username}`, {
+      fetch(`https://api.github.com/users/${encodedUsername}`, {
         headers: { Accept: 'application/vnd.github+json' }
       }),
-      fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated`, {
+      fetch(`https://api.github.com/users/${encodedUsername}/repos?per_page=100&sort=updated`, {
         headers: { Accept: 'application/vnd.github+json' }
       })
     ])
