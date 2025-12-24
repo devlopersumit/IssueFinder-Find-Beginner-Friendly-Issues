@@ -1,4 +1,5 @@
 import React, { useRef } from 'react'
+import { sanitizeUrl, escapeHtml } from '../utils/security'
 import type { ContributorStats } from '../utils/contributionTracker'
 
 type ShareableCardProps = {
@@ -32,7 +33,6 @@ const ShareableCard: React.FC<ShareableCardProps> = ({ stats, period = 'all', on
     if (navigator.share && cardRef.current) {
       try {
         // Sanitize username before sharing
-        const { escapeHtml } = await import('../utils/security')
         const safeUsername = escapeHtml(stats.username)
         
         await navigator.share({
@@ -51,7 +51,6 @@ const ShareableCard: React.FC<ShareableCardProps> = ({ stats, period = 'all', on
 
   const handleCopyLink = () => {
     // Validate URL before copying
-    const { sanitizeUrl } = require('../utils/security')
     const safeUrl = sanitizeUrl(window.location.href)
     if (safeUrl) {
       navigator.clipboard.writeText(safeUrl).catch(() => {
