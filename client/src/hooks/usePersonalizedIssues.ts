@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useFetchIssues } from './useFetchIssues'
 import { matchIssues, fetchUserProfile, type UserProfile, type IssueMatch } from '../utils/issueMatcher'
 

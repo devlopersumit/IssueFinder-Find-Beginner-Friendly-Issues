@@ -22,13 +22,6 @@ const PersonalizedIssues: React.FC<PersonalizedIssuesProps> = ({ className = '',
     }
   }
 
-  const getMatchBadgeColor = (score: number): string => {
-    if (score >= 70) return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-    if (score >= 50) return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-    if (score >= 30) return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-    return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-  }
-
   const getMatchLabel = (score: number): string => {
     if (score >= 70) return 'Perfect Match'
     if (score >= 50) return 'Great Match'
@@ -134,15 +127,17 @@ const PersonalizedIssues: React.FC<PersonalizedIssuesProps> = ({ className = '',
                             Good First Issue
                           </span>
                         )}
-                        <span className={`text-xs px-1.5 py-0.5 border ${
-                          difficulty === 'beginner' 
-                            ? 'border-emerald-600 dark:border-[#7ee787] text-emerald-600 dark:text-[#7ee787]' 
-                            : difficulty === 'intermediate' 
-                            ? 'border-orange-600 dark:border-[#f0883e] text-orange-600 dark:text-[#f0883e]' 
-                            : 'border-red-600 dark:border-[#f85149] text-red-600 dark:text-[#f85149]'
-                        }`}>
-                          {difficulty.toUpperCase()}
-                        </span>
+                        {difficulty && (
+                          <span className={`text-xs px-1.5 py-0.5 border ${
+                            difficulty === 'beginner' 
+                              ? 'border-emerald-600 dark:border-[#7ee787] text-emerald-600 dark:text-[#7ee787]' 
+                              : difficulty === 'intermediate' 
+                              ? 'border-orange-600 dark:border-[#f0883e] text-orange-600 dark:text-[#f0883e]' 
+                              : 'border-red-600 dark:border-[#f85149] text-red-600 dark:text-[#f85149]'
+                          }`}>
+                            {difficulty.toUpperCase()}
+                          </span>
+                        )}
                       </div>
                       <h4 className="text-sm text-gray-900 dark:text-[#c9d1d9] group-hover:text-blue-600 dark:group-hover:text-[#58a6ff] transition-colors line-clamp-2 mb-1">
                         {issue.title}
