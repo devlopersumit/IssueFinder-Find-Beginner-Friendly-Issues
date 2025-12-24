@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { validateGitHubUsername, sanitizeInput } from '../utils/security'
 import { useContributorProfile } from '../hooks/useContributorProfile'
 import ImpactMetrics from '../components/ImpactMetrics'
 import ContributionTimeline from '../components/ContributionTimeline'
@@ -10,7 +11,6 @@ const ContributorProfile: React.FC = () => {
   const { username } = useParams<{ username: string }>()
   
   // Validate and sanitize username from URL
-  const { validateGitHubUsername, sanitizeInput } = require('../utils/security')
   const sanitizedUsername = username ? sanitizeInput(decodeURIComponent(username)) : null
   const validation = sanitizedUsername ? validateGitHubUsername(sanitizedUsername) : { valid: false }
   
