@@ -25,41 +25,36 @@ const ProfileSearchForm: React.FC = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-6">
+    <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-6 font-mono">
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="flex-1 relative">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 2C5.477 2 2 5.484 2 10.017c0 4.424 2.865 8.178 6.839 9.504.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.833.091-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.952 0-1.093.39-1.988 1.03-2.688-.104-.253-.447-1.27.098-2.647 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.748-1.026 2.748-1.026.546 1.377.203 2.394.1 2.647.64.7 1.028 1.595 1.028 2.688 0 3.848-2.338 4.696-4.566 4.945.359.309.679.92.679 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.481A10.019 10.019 0 0020 10.017C20 5.484 15.522 2 10 2z" clipRule="evenodd" />
-            </svg>
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <span className="text-emerald-600 dark:text-[#7ee787] text-sm">$</span>
           </div>
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Enter GitHub username"
-            className="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+            placeholder="github_username"
+            className="w-full pl-8 pr-4 py-3 border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] text-gray-900 dark:text-[#c9d1d9] placeholder-gray-500 dark:placeholder-[#6e7681] focus:outline-none focus:border-blue-500 dark:focus:border-[#58a6ff] focus:ring-1 focus:ring-blue-500 dark:focus:ring-[#58a6ff] text-sm"
           />
         </div>
         <button
           type="submit"
           disabled={!username.trim()}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/25 dark:shadow-blue-500/20 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/40 dark:hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-emerald-600 dark:border-[#238636] bg-emerald-600 dark:bg-[#238636] px-6 py-3 text-sm font-semibold text-white dark:text-[#c9d1d9] transition-colors hover:bg-emerald-700 dark:hover:bg-[#2ea043] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          View Profile
+          <span className="text-xs">[VIEW]</span>
         </button>
       </div>
       {error && (
-        <p className="mt-2 text-xs text-red-600 dark:text-red-400 text-center">
-          {error}
+        <p className="mt-2 text-xs text-red-600 dark:text-[#f85149] text-center font-mono">
+          [ERROR] {error}
         </p>
       )}
       {!error && (
-        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
-          Enter your GitHub username to see your contribution impact
+        <p className="mt-2 text-xs text-gray-600 dark:text-[#8b949e] text-center font-mono">
+          [INFO] Enter your GitHub username to see your contribution impact
         </p>
       )}
     </form>
@@ -142,41 +137,52 @@ const HomePage: React.FC = () => {
   return (
     <>
       <Hero />
-      <main className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
+      <main className="mx-auto max-w-7xl px-4 py-12 sm:py-16 bg-white dark:bg-[#0d1117] font-mono">
         {/* Contribution Impact Tracker CTA */}
         <section className="mb-16">
-          <div className="relative rounded-2xl overflow-hidden group">
-            {/* Animated gradient border */}
-            <div className="absolute inset-0 rounded-2xl p-[2px]">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500 dark:from-emerald-500 dark:via-blue-400 dark:to-purple-400 opacity-75 dark:opacity-60 bg-[length:200%_100%] animate-gradient-border"></div>
-            </div>
-            {/* Glow effect */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500 dark:from-emerald-500 dark:via-blue-400 dark:to-purple-400 rounded-2xl opacity-20 dark:opacity-10 blur-xl animate-pulse-slow"></div>
+          <div className="relative border-2 border-emerald-500 dark:border-[#238636] bg-gray-50 dark:bg-[#161b22] shadow-lg shadow-emerald-500/20 dark:shadow-[#238636]/20">
+            {/* Animated border glow */}
+            <div className="absolute -inset-0.5 border-2 border-emerald-400 dark:border-[#2ea043] opacity-50 animate-pulse pointer-events-none"></div>
             
-            <div className="relative rounded-2xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 p-8 sm:p-12 text-center z-10 backdrop-blur-sm">
-              <div className="inline-flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            {/* Terminal Header */}
+            <div className="relative border-b-2 border-emerald-500 dark:border-[#238636] bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-[#0d4432] dark:to-[#0d4432] px-4 py-3">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                  <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
+                  <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                </div>
+                <span className="text-xs font-semibold text-gray-700 dark:text-[#c9d1d9] ml-2">contribution-tracker</span>
+                <span className="ml-auto flex items-center gap-1.5 px-2 py-0.5 bg-emerald-600 dark:bg-[#238636] text-white text-xs font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                  NEW
                 </span>
-                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">New Feature</span>
               </div>
-              
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-                Track Your Contribution Impact
-              </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-                Get your personalized contribution profile with impact score, achievements, and shareable cards. Showcase your open source journey!
-              </p>
-              <ProfileSearchForm />
-              <div className="mt-6">
+            </div>
+            
+            <div className="relative p-8 sm:p-12">
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-emerald-600 dark:text-[#7ee787] text-lg animate-pulse">▶</span>
+                  <span className="text-blue-600 dark:text-[#58a6ff] text-base font-bold">track-contribution-impact</span>
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-[#c9d1d9] mb-4">
+                  <span className="text-emerald-600 dark:text-[#7ee787]">Track</span> Your Contribution{' '}
+                  <span className="text-blue-600 dark:text-[#58a6ff]">Impact</span>
+                </h2>
+                <p className="text-base text-gray-600 dark:text-[#8b949e] mb-8 max-w-2xl leading-relaxed">
+                  Get your personalized contribution profile with impact score, achievements, and shareable cards. Showcase your open source journey!
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#0d1117] border border-gray-300 dark:border-[#30363d] p-6 mb-6">
+                <ProfileSearchForm />
+              </div>
+              <div className="text-center">
                 <Link
                   to="/dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-blue-600 dark:border-blue-500 bg-white dark:bg-gray-900 px-8 py-3 text-base font-semibold text-blue-600 dark:text-blue-400 transition-all duration-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:scale-105"
+                  className="inline-flex items-center justify-center gap-2 border-2 border-blue-500 dark:border-[#58a6ff] bg-white dark:bg-[#0d1117] px-6 py-3 text-sm font-semibold text-blue-600 dark:text-[#58a6ff] transition-all hover:bg-blue-50 dark:hover:bg-[#1c2128] hover:scale-105 hover:shadow-lg hover:shadow-blue-500/20"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
+                  <span className="text-emerald-600 dark:text-[#7ee787]">▶</span>
                   Developer Dashboard
                 </Link>
               </div>
@@ -186,37 +192,59 @@ const HomePage: React.FC = () => {
 
         {/* Developer Dashboard CTA */}
         <section className="mb-16">
-          <div className="relative rounded-2xl overflow-hidden group">
-            {/* Animated gradient border */}
-            <div className="absolute inset-0 rounded-2xl p-[2px]">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500 dark:from-emerald-500 dark:via-blue-400 dark:to-purple-400 opacity-75 dark:opacity-60 bg-[length:200%_100%] animate-gradient-border"></div>
-            </div>
-            {/* Glow effect */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500 dark:from-emerald-500 dark:via-blue-400 dark:to-purple-400 rounded-2xl opacity-20 dark:opacity-10 blur-xl animate-pulse-slow"></div>
+          <div className="relative border-2 border-blue-500 dark:border-[#58a6ff] bg-gray-50 dark:bg-[#161b22] shadow-lg shadow-blue-500/20 dark:shadow-[#58a6ff]/20">
+            {/* Animated border glow */}
+            <div className="absolute -inset-0.5 border-2 border-blue-400 dark:border-[#79c0ff] opacity-50 animate-pulse pointer-events-none"></div>
             
-            <div className="relative rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50 to-blue-50 dark:from-emerald-900/20 dark:via-teal-900/20 dark:to-blue-900/20 p-8 sm:p-12 text-center z-10 backdrop-blur-sm">
-              <div className="inline-flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            {/* Terminal Header */}
+            <div className="relative border-b-2 border-blue-500 dark:border-[#58a6ff] bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-[#1c2b41] dark:to-[#1c2b41] px-4 py-3">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                  <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
+                  <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                </div>
+                <span className="text-xs font-semibold text-gray-700 dark:text-[#c9d1d9] ml-2">developer-dashboard</span>
+                <span className="ml-auto flex items-center gap-1.5 px-2 py-0.5 bg-blue-600 dark:bg-[#1f6feb] text-white text-xs font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                  LIVE
                 </span>
-                <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">New Feature</span>
               </div>
-              
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-                Developer Dashboard
-              </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-                Experience our terminal-style interface with live contributions feed and AI-powered issue matching engine
-              </p>
+            </div>
+            
+            <div className="relative p-8 sm:p-12 text-center">
+              <div className="mb-6">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <span className="text-emerald-600 dark:text-[#7ee787] text-lg animate-pulse">▶</span>
+                  <span className="text-blue-600 dark:text-[#58a6ff] text-base font-bold">open-dashboard</span>
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-[#c9d1d9] mb-4">
+                  <span className="text-blue-600 dark:text-[#58a6ff]">Developer</span> Dashboard
+                </h2>
+                <p className="text-base text-gray-600 dark:text-[#8b949e] mb-8 max-w-2xl mx-auto leading-relaxed">
+                  Experience our terminal-style interface with live contributions feed and AI-powered issue matching engine
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-4 mt-6 text-sm">
+                  <div className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117]">
+                    <span className="text-emerald-600 dark:text-[#7ee787]">✓</span>
+                    <span className="text-gray-700 dark:text-[#c9d1d9]">Live Feed</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117]">
+                    <span className="text-purple-600 dark:text-[#d2a8ff]">✓</span>
+                    <span className="text-gray-700 dark:text-[#c9d1d9]">AI Matching</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117]">
+                    <span className="text-orange-600 dark:text-[#f0883e]">✓</span>
+                    <span className="text-gray-700 dark:text-[#c9d1d9]">Terminal UI</span>
+                  </div>
+                </div>
+              </div>
               <Link
                 to="/dashboard"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500 px-8 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 dark:shadow-emerald-500/20 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/40 dark:hover:shadow-emerald-500/30"
+                className="inline-flex items-center justify-center gap-2 border-2 border-emerald-600 dark:border-[#238636] bg-emerald-600 dark:bg-[#238636] px-8 py-3 text-sm font-semibold text-white dark:text-[#c9d1d9] transition-all hover:bg-emerald-700 dark:hover:bg-[#2ea043] hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/30"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Open Developer Dashboard
+                <span className="text-xs font-bold">[OPEN]</span>
+                Developer Dashboard
               </Link>
             </div>
           </div>
@@ -224,11 +252,15 @@ const HomePage: React.FC = () => {
 
         {/* Problems We Solve Section */}
         <section className="mb-16">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          <div className="border border-gray-300 dark:border-[#30363d] bg-gray-50 dark:bg-[#161b22] mb-6 p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-emerald-600 dark:text-[#7ee787] text-sm">▶</span>
+              <span className="text-blue-600 dark:text-[#58a6ff] text-sm font-semibold">problems-we-solve</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-[#c9d1d9] mb-4">
               The Problems We Solve
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <p className="text-base text-gray-600 dark:text-[#8b949e] max-w-2xl">
               Open source contributors face real challenges. Here's how IssueFinder helps you overcome them.
             </p>
           </div>
@@ -237,28 +269,22 @@ const HomePage: React.FC = () => {
             {problems.map((problem, index) => (
               <div
                 key={index}
-                className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 hover:shadow-lg transition-shadow"
+                className="border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] p-6 hover:border-blue-500 dark:hover:border-[#58a6ff] transition-colors"
               >
                 <div className="flex items-start gap-3 mb-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                  <div className="flex-shrink-0">
+                    <span className="text-red-600 dark:text-[#f85149] text-sm">[!]</span>
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                    <h3 className="font-semibold text-gray-900 dark:text-[#c9d1d9] mb-1">
                       {problem.title}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    <p className="text-sm text-gray-600 dark:text-[#8b949e] mb-3 leading-relaxed">
                       {problem.description}
                     </p>
-                    <div className="flex items-start gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center mt-0.5">
-                        <svg className="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                    <div className="flex items-start gap-2 pt-3 border-t border-gray-300 dark:border-[#30363d]">
+                      <span className="text-emerald-600 dark:text-[#7ee787] text-sm">✓</span>
+                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300 leading-relaxed">
                         {problem.solution}
                       </p>
                     </div>
@@ -271,11 +297,15 @@ const HomePage: React.FC = () => {
 
         {/* How It Works / Features */}
         <section className="mb-16">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          <div className="border border-gray-300 dark:border-[#30363d] bg-gray-50 dark:bg-[#161b22] mb-6 p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-emerald-600 dark:text-[#7ee787] text-sm">▶</span>
+              <span className="text-blue-600 dark:text-[#58a6ff] text-sm font-semibold">how-it-works</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-[#c9d1d9] mb-4">
               How IssueFinder Helps
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <p className="text-base text-gray-600 dark:text-[#8b949e] max-w-2xl">
               Powerful features designed to make your contribution journey smoother
             </p>
           </div>
@@ -284,15 +314,15 @@ const HomePage: React.FC = () => {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 text-center hover:shadow-lg transition-shadow"
+                className="border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] p-6 text-center hover:border-blue-500 dark:hover:border-[#58a6ff] transition-colors"
               >
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 mb-4">
+                <div className="inline-flex items-center justify-center w-12 h-12 border border-gray-300 dark:border-[#30363d] bg-gray-50 dark:bg-[#161b22] text-blue-600 dark:text-[#58a6ff] mb-4">
                   {feature.icon}
                 </div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 className="font-semibold text-gray-900 dark:text-[#c9d1d9] mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-[#8b949e] leading-relaxed">
                   {feature.description}
                 </p>
               </div>
@@ -301,26 +331,34 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Call to Action */}
-        <section className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10 p-8 sm:p-12 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            Ready to start contributing?
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-            Stop wasting time searching. Find issues that match your skills in seconds.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/categories"
-              className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-8 py-3 text-base font-semibold text-white transition hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600"
-            >
-              Browse by Category
-            </Link>
-            <Link
-              to="/issues"
-              className="inline-flex items-center justify-center rounded-lg border-2 border-emerald-600 bg-white px-8 py-3 text-base font-semibold text-emerald-600 transition hover:bg-emerald-50 dark:border-emerald-500 dark:bg-gray-900 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
-            >
-              View All Issues
-            </Link>
+        <section className="border border-gray-300 dark:border-[#30363d] bg-gray-50 dark:bg-[#161b22] p-8 sm:p-12">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <span className="text-emerald-600 dark:text-[#7ee787] text-sm">▶</span>
+              <span className="text-blue-600 dark:text-[#58a6ff] text-sm font-semibold">get-started</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-[#c9d1d9] mb-4">
+              Ready to start contributing?
+            </h2>
+            <p className="text-base text-gray-600 dark:text-[#8b949e] mb-8 max-w-2xl mx-auto">
+              Stop wasting time searching. Find issues that match your skills in seconds.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                to="/categories"
+                className="inline-flex items-center justify-center border border-emerald-600 dark:border-[#238636] bg-emerald-600 dark:bg-[#238636] px-8 py-3 text-sm font-semibold text-white dark:text-[#c9d1d9] transition-colors hover:bg-emerald-700 dark:hover:bg-[#2ea043]"
+              >
+                <span className="text-xs mr-2">[BROWSE]</span>
+                Browse by Category
+              </Link>
+              <Link
+                to="/issues"
+                className="inline-flex items-center justify-center border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] px-8 py-3 text-sm font-semibold text-gray-900 dark:text-[#c9d1d9] transition-colors hover:bg-gray-50 dark:hover:bg-[#161b22] hover:border-blue-500 dark:hover:border-[#58a6ff]"
+              >
+                <span className="text-blue-600 dark:text-[#58a6ff] text-xs mr-2">▶</span>
+                View All Issues
+              </Link>
+            </div>
           </div>
         </section>
       </main>
