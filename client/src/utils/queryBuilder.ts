@@ -122,21 +122,22 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
   parts.push('no:assignee')
   
   const now = new Date()
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-  const year = thirtyDaysAgo.getFullYear()
-  const month = String(thirtyDaysAgo.getMonth() + 1).padStart(2, '0')
-  const day = String(thirtyDaysAgo.getDate()).padStart(2, '0')
-  const dateStr = `${year}-${month}-${day}`
+  // Default to active issues (updated in last 7 days)
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+  
+  const sevenDaysAgoStr = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(sevenDaysAgo.getDate()).padStart(2, '0')}`
   
   if (params.selectedLastActivity) {
     const activityQuery = getLastActivityQuery(params.selectedLastActivity)
     if (activityQuery) {
       parts.push(activityQuery)
     } else {
-      parts.push(`created:>${dateStr}`)
+      // Default to active issues (updated in last 7 days)
+      parts.push(`updated:>${sevenDaysAgoStr}`)
     }
   } else {
-    parts.push(`created:>${dateStr}`)
+    // Default to active issues (updated in last 7 days) instead of created
+    parts.push(`updated:>${sevenDaysAgoStr}`)
   }
   
   if (params.selectedDifficulty) {
@@ -149,12 +150,12 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
       parts.push('no:assignee')
       
       const now = new Date()
-      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-      const year = thirtyDaysAgo.getFullYear()
-      const month = String(thirtyDaysAgo.getMonth() + 1).padStart(2, '0')
-      const day = String(thirtyDaysAgo.getDate()).padStart(2, '0')
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      const year = sevenDaysAgo.getFullYear()
+      const month = String(sevenDaysAgo.getMonth() + 1).padStart(2, '0')
+      const day = String(sevenDaysAgo.getDate()).padStart(2, '0')
       const dateStr = `${year}-${month}-${day}`
-      parts.push(`created:>${dateStr}`)
+      parts.push(`updated:>${dateStr}`)
       parts.push('(label:"expert" OR label:"advanced" OR label:"hard" OR label:"difficult" OR label:"complex" OR label:"challenging")')
       parts.push('-label:"good first issue"')
       parts.push('-label:"good-first-issue"')
@@ -226,7 +227,7 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
                        (params.selectedLabels && params.selectedLabels.length > 0) ||
                        (params.searchTerm && params.searchTerm.trim())
   
-  const baseDateFilter = `created:>${dateStr}`
+  const baseDateFilter = `updated:>${sevenDaysAgoStr}`
   
   if (!hasAnyFilter && query === `state:open type:issue no:assignee ${baseDateFilter}`) {
     return `state:open type:issue no:assignee ${baseDateFilter} (label:"good first issue" OR label:"help wanted")`
@@ -236,6 +237,8 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
     const advancedQuery = `state:open type:issue no:assignee ${baseDateFilter} (label:"expert" OR label:"advanced" OR label:"hard" OR label:"difficult" OR label:"complex" OR label:"challenging") -label:"good first issue" -label:"good-first-issue" -label:"first-timers-only" -label:"help wanted" -label:"help-wanted"`
     return advancedQuery
   }
+  
+  // Remove unused dateStr variable
   
   return query
 }
