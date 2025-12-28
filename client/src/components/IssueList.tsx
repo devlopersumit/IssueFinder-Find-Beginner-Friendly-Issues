@@ -1,14 +1,12 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react'
 import { useFetchIssues } from '../hooks/useFetchIssues'
 import DifficultyBadge from './DifficultyBadge'
-import FreshnessIndicator from './FreshnessIndicator'
 import { detectDifficulty } from '../utils/difficulty'
 import type { NaturalLanguage } from '../utils/languageDetection'
 import { filterByLanguage } from '../utils/languageDetection'
 import { fetchRepositoryLanguages } from '../utils/repoLanguages'
 import { useSavedIssues } from '../hooks/useSavedIssues'
 import { LoadingProgress } from './LoadingProgress'
-import { calculateFreshness } from '../utils/issueFreshness'
 
 type IssueListProps = {
   className?: string
@@ -90,26 +88,10 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       result = filterByLanguage(result, naturalLanguageFilter)
     }
 
+    // Sort by most recently updated (active issues first)
     result = [...result].sort((a, b) => {
-      const freshnessA = calculateFreshness(a.updated_at, a.created_at)
-      const freshnessB = calculateFreshness(b.updated_at, b.created_at)
-      
-      const statusOrder: Record<string, number> = {
-        'active': 0,
-        'stale': 1,
-        'inactive': 2
-      }
-      
-      const orderA = statusOrder[freshnessA.status] ?? 2
-      const orderB = statusOrder[freshnessB.status] ?? 2
-      
-      if (orderA !== orderB) {
-        return orderA - orderB
-      }
-      
       const dateA = new Date(a.updated_at || a.created_at).getTime()
       const dateB = new Date(b.updated_at || b.created_at).getTime()
-      
       return dateB - dateA
     })
 
@@ -247,26 +229,29 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
   }
 
   return (
-    <section className={`relative w-full max-w-full overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition-colors duration-300 dark:border-gray-800 dark:bg-gray-900 ${className}`}>
-      <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-48 max-w-4xl rounded-b-[4rem] bg-gradient-to-b from-emerald-200/40 via-slate-100/50 to-transparent dark:from-emerald-500/10 dark:via-gray-800/10" aria-hidden="true" />
-      <div className="relative p-4 sm:p-6 md:p-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <section className={`relative w-full max-w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg transition-colors duration-300 dark:border-gray-700 dark:bg-gray-800 ${className}`}>
+      <div className="relative p-6 sm:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Live issue feed</p>
-            <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Find issues that match your skills</h2>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-green-600 dark:text-green-400">Active Issues</p>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Real-Time Active Issues</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Updated in the last 7 days</p>
           </div>
-          <div className="inline-flex max-w-sm items-center gap-3 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-slate-300">
+          <div className="inline-flex items-center gap-3 rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm dark:border-gray-600 dark:from-gray-800 dark:to-gray-700 dark:text-slate-300">
             {isLoading && displayItems.length === 0 ? (
               <>
-                <svg className="h-4 w-4 animate-spin text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 animate-spin text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span className="text-blue-600 dark:text-blue-400 font-semibold">Fetching real-time issues...</span>
+                <span className="text-blue-600 dark:text-blue-400 font-semibold">Fetching active issues...</span>
               </>
             ) : isLoading ? (
               <>
-                <svg className="h-4 w-4 animate-spin text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 animate-spin text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -278,10 +263,13 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
               </span>
             ) : (
               <>
-                <svg className="h-4 w-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10A8 8 0 112 10a8 8 0 0116 0zm-9-3a1 1 0 112 0v4a1 1 0 01-.293.707l-2 2a1 1 0 11-1.414-1.414L9 10.586V7z" clipRule="evenodd" />
-                </svg>
-                {totalCount.toLocaleString()} curated {totalCount === 1 ? 'issue' : 'issues'}
+                <div className="flex items-center gap-2">
+                  <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-semibold">{totalCount.toLocaleString()}</span>
+                  <span className="text-slate-500 dark:text-slate-400">active {totalCount === 1 ? 'issue' : 'issues'}</span>
+                </div>
               </>
             )}
           </div>
@@ -289,18 +277,18 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
 
         {/* Enhanced Loading Display */}
         {isLoading && displayItems.length === 0 && (
-          <div className="mt-6 rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 dark:border-blue-800 dark:from-blue-900/20 dark:to-indigo-900/20">
-            <div className="flex items-center justify-center gap-4">
-              <svg className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24">
+          <div className="mt-8 rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-8 dark:border-blue-800 dark:from-blue-900/20 dark:to-indigo-900/20">
+            <div className="flex flex-col items-center justify-center gap-4">
+              <svg className="h-10 w-10 animate-spin text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
               <div className="text-center">
-                <p className="text-base font-semibold text-blue-900 dark:text-blue-200">Fetching real-time issues</p>
-                <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">Searching GitHub for matching issues...</p>
+                <p className="text-lg font-bold text-blue-900 dark:text-blue-200">Fetching Active Issues</p>
+                <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">Searching GitHub for issues updated in the last 7 days...</p>
               </div>
             </div>
-            <div className="mt-4">
+            <div className="mt-6">
               <LoadingProgress isLoading={isLoading} />
             </div>
           </div>
@@ -392,14 +380,13 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
                 const difficulty = detectDifficulty(issue.labels || [])
                 const repoLangs = repoLanguages[issue.repository_url] || []
                 const primaryLanguage = repoLangs.length > 0 ? repoLangs[0] : null
-                const freshness = calculateFreshness(issue.updated_at, issue.created_at)
 
                 const saved = isSaved(issue.id)
                 
                 return (
                   <div
                     key={issue.id}
-                    className="group flex h-full w-full flex-col rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-md focus-within:ring-2 focus-within:ring-slate-400 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
+                    className="group flex h-full w-full flex-col rounded-xl border border-gray-200 bg-white p-5 shadow-md transition-all duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl focus-within:ring-2 focus-within:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-600"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
@@ -439,11 +426,6 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
                           )}
                         </button>
                         <DifficultyBadge difficulty={difficulty} />
-                        <FreshnessIndicator 
-                          status={freshness.status} 
-                          label={freshness.label}
-                          description={freshness.description}
-                        />
                       </div>
                     </div>
 
