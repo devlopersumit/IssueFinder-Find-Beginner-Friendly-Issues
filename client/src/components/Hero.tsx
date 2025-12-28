@@ -32,31 +32,43 @@ const highlights: Highlight[] = [
 
 const Hero: React.FC = () => {
   return (
-    <section className="relative overflow-hidden border-b border-gray-200 dark:border-gray-800 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 transition-colors duration-300">
-      <div className="absolute -top-24 right-[-10%] h-64 w-64 rounded-full bg-slate-200/50 blur-3xl dark:bg-slate-600/10" aria-hidden="true" />
-      <div className="absolute -bottom-16 left-[-5%] h-72 w-72 rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-500/10" aria-hidden="true" />
+    <section className="relative overflow-hidden border-b border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] font-mono">
+      {/* Terminal-style header bar */}
+      <div className="border-b border-gray-300 dark:border-[#30363d] bg-gray-50 dark:bg-[#161b22] px-4 py-2">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1.5">
+            <div className="h-3 w-3 rounded-full bg-red-500"></div>
+            <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
+            <div className="h-3 w-3 rounded-full bg-green-500"></div>
+          </div>
+          <span className="text-xs text-gray-600 dark:text-[#8b949e] ml-2">issuefinder.fun</span>
+        </div>
+      </div>
 
       <div className="relative mx-auto max-w-7xl px-4 py-12 sm:py-16 lg:py-20">
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
           <div className="space-y-8 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:border-gray-700 dark:bg-gray-900 dark:text-slate-300">
-              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              Live open source intelligence
+            <div className="inline-flex items-center gap-2 border border-gray-300 dark:border-[#30363d] bg-gray-50 dark:bg-[#161b22] px-4 py-1 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-[#8b949e]">
+              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-600 dark:bg-[#7ee787]" />
+              <span className="text-emerald-600 dark:text-[#7ee787]">▶</span>
+              <span>live open source intelligence</span>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center gap-3 rounded-full border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-2.5 w-fit mx-auto lg:mx-0 dark:border-emerald-900/40 dark:from-emerald-900/20 dark:to-teal-900/20">
-                <svg className="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              <div className="flex items-center gap-3 border-l-2 border-emerald-600 dark:border-[#7ee787] bg-gray-50 dark:bg-[#161b22] px-5 py-2.5 w-fit mx-auto lg:mx-0">
+                <span className="text-emerald-600 dark:text-[#7ee787] text-sm">$</span>
+                <p className="text-sm font-semibold text-gray-900 dark:text-[#c9d1d9]">
                   Ready to make your first contribution? Start here and find issues that match your skills!
                 </p>
               </div>
-              <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-5xl lg:text-6xl">
-                Find GitHub issues that match your skills
+              <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-[#c9d1d9] sm:text-5xl lg:text-6xl">
+                <span className="text-blue-600 dark:text-[#58a6ff]">find</span>{' '}
+                <span className="text-purple-600 dark:text-[#d2a8ff]">github</span>{' '}
+                <span className="text-emerald-600 dark:text-[#7ee787]">issues</span>
+                <br />
+                <span className="text-gray-700 dark:text-[#8b949e]">that match your skills</span>
               </h1>
-              <p className="text-base text-slate-600 dark:text-slate-300 sm:text-lg lg:text-xl">
+              <p className="text-base text-gray-600 dark:text-[#8b949e] sm:text-lg lg:text-xl leading-relaxed">
                 Stop wasting time searching. We show you open-source projects and issues that are perfect for you. Filter by your favorite programming language, difficulty level, and start contributing today.
               </p>
             </div>
@@ -64,50 +76,51 @@ const Hero: React.FC = () => {
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
               <Link
                 to="/categories"
-                className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-slate-900/10 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-slate-100 dark:text-gray-900 dark:hover:bg-slate-200"
+                className="inline-flex items-center justify-center border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] px-6 py-3 text-base font-semibold text-gray-900 dark:text-[#c9d1d9] transition-colors hover:bg-gray-50 dark:hover:bg-[#161b22] hover:border-blue-500 dark:hover:border-[#58a6ff]"
               >
+                <span className="text-emerald-600 dark:text-[#7ee787] mr-2">▶</span>
                 Explore categories
               </Link>
               <Link
                 to="/beginner-guide"
-                className="inline-flex items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 px-6 py-3 text-base font-semibold text-emerald-700 transition-colors duration-200 hover:border-emerald-400 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:border-emerald-600 dark:hover:bg-emerald-900/50"
+                className="inline-flex items-center justify-center border border-emerald-600 dark:border-[#7ee787] bg-emerald-50 dark:bg-[#238636] px-6 py-3 text-base font-semibold text-emerald-700 dark:text-[#c9d1d9] transition-colors hover:bg-emerald-100 dark:hover:bg-[#2ea043]"
               >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
+                <span className="text-emerald-600 dark:text-[#7ee787] mr-2">$</span>
                 Beginner Guide
               </Link>
               <Link
                 to="/bounty"
-                className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-6 py-3 text-base font-semibold text-slate-800 transition-colors duration-200 hover:border-slate-400 hover:text-slate-900 dark:border-gray-700 dark:text-slate-200 dark:hover:border-gray-500 dark:hover:text-white"
+                className="inline-flex items-center justify-center border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] px-6 py-3 text-base font-semibold text-gray-800 dark:text-[#c9d1d9] transition-colors hover:bg-gray-50 dark:hover:bg-[#161b22]"
               >
+                <span className="text-orange-600 dark:text-[#f0883e] mr-2">▶</span>
                 View bounty issues
               </Link>
             </div>
 
-            <div className="flex items-center justify-center gap-3 text-sm text-slate-500 dark:text-slate-400 lg:justify-start">
-              <svg className="h-5 w-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Fresh issues updated every hour. All ready for new contributors.
+            <div className="flex items-center justify-center gap-3 text-sm text-gray-600 dark:text-[#8b949e] lg:justify-start">
+              <span className="text-emerald-600 dark:text-[#7ee787]">✓</span>
+              <span>Fresh issues updated every hour. All ready for new contributors.</span>
             </div>
           </div>
 
           <div className="relative">
-            <div className="rounded-2xl border border-white/80 bg-white/70 p-6 shadow-xl shadow-slate-200/50 backdrop-blur dark:border-gray-700/60 dark:bg-gray-900/60 dark:shadow-black/20">
-              <div className="mb-6">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Why developers love IssueFinder</p>
-                <h2 className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">Save time, find better projects</h2>
-                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+            <div className="border border-gray-300 dark:border-[#30363d] bg-gray-50 dark:bg-[#161b22] p-6">
+              <div className="mb-6 border-b border-gray-300 dark:border-[#30363d] pb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-emerald-600 dark:text-[#7ee787] text-sm">▶</span>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-[#8b949e]">Why developers love IssueFinder</p>
+                </div>
+                <h2 className="mt-2 text-2xl font-semibold text-gray-900 dark:text-[#c9d1d9]">Save time, find better projects</h2>
+                <p className="mt-3 text-sm text-gray-600 dark:text-[#8b949e] leading-relaxed">
                   No more endless scrolling. We filter out the noise and show you only the issues that match what you're looking for.
                 </p>
               </div>
               <dl className="grid grid-cols-2 gap-4 sm:gap-6">
                 {highlights.map((item) => (
-                  <div key={item.label} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-left dark:border-gray-700 dark:bg-gray-800/60">
-                    <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{item.label}</dt>
-                    <dd className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">{item.value}</dd>
-                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{item.description}</p>
+                  <div key={item.label} className="border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] p-4 text-left">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-[#8b949e]">{item.label}</dt>
+                    <dd className="mt-2 text-2xl font-semibold text-blue-600 dark:text-[#58a6ff]">{item.value}</dd>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-[#8b949e]">{item.description}</p>
                   </div>
                 ))}
               </dl>
