@@ -23,10 +23,14 @@
   }
 
   body {
-    @apply font-sans antialiased;
+    @apply font-mono antialiased;
     background-color: var(--bg-primary);
     color: var(--text-primary);
     transition: background-color 300ms ease, color 300ms ease;
+  }
+  
+  html {
+    @apply font-mono;
   }
 
   h1,
