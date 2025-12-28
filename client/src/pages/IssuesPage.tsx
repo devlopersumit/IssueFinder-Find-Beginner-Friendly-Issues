@@ -69,10 +69,14 @@ const IssuesPage: React.FC = () => {
   }, [submittedSearch, selectedLabels, selectedCategories, selectedLanguage, selectedDifficulty, selectedType, selectedFramework, selectedLastActivity])
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">Browse Issues</h1>
-        <p className="text-slate-600 dark:text-slate-400">Find open source issues that match your skills</p>
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse"></div>
+          <span className="text-sm font-semibold uppercase tracking-wide text-green-600 dark:text-green-400">Active Issues Only</span>
+        </div>
+        <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-3">Browse Active Issues</h1>
+        <p className="text-lg text-slate-600 dark:text-slate-400">Discover real-time open source issues updated in the last 7 days</p>
       </div>
 
       <MobileCategoryTabs
