@@ -76,6 +76,11 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
         // Always check cache first
         const cached = getDailyCached<GithubSearchResponse>(cacheKey)
         if (cached) {
+          // Show loading state briefly before showing cached data
+          await sleep(500) // Small delay to show loading indicator
+          
+          if (controller.signal.aborted) return
+          
           setData(cached)
           setIsLoading(false)
           
