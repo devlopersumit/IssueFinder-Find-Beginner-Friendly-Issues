@@ -122,40 +122,30 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
   parts.push('no:assignee')
   
   const now = new Date()
-  // Default to active issues (updated in last 7 days)
-  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+  // Default to issues updated in last 1 month (30 days)
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
   
-  const sevenDaysAgoStr = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(sevenDaysAgo.getDate()).padStart(2, '0')}`
+  const thirtyDaysAgoStr = `${thirtyDaysAgo.getFullYear()}-${String(thirtyDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(thirtyDaysAgo.getDate()).padStart(2, '0')}`
   
   if (params.selectedLastActivity) {
     const activityQuery = getLastActivityQuery(params.selectedLastActivity)
     if (activityQuery) {
       parts.push(activityQuery)
     } else {
-      // Default to active issues (updated in last 7 days)
-      parts.push(`updated:>${sevenDaysAgoStr}`)
+      // Default to issues updated in last 1 month
+      parts.push(`updated:>${thirtyDaysAgoStr}`)
     }
   } else {
-    // Default to active issues (updated in last 7 days) instead of created
-    parts.push(`updated:>${sevenDaysAgoStr}`)
+    // Default to issues updated in last 1 month
+    parts.push(`updated:>${thirtyDaysAgoStr}`)
   }
   
   if (params.selectedDifficulty) {
     const difficultyConfig = getDifficultyLabels(params.selectedDifficulty)
     
     if (params.selectedDifficulty === 'advanced') {
-      parts.length = 0
-      parts.push('state:open')
-      parts.push('type:issue')
-      parts.push('no:assignee')
-      
-      const now = new Date()
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      const year = sevenDaysAgo.getFullYear()
-      const month = String(sevenDaysAgo.getMonth() + 1).padStart(2, '0')
-      const day = String(sevenDaysAgo.getDate()).padStart(2, '0')
-      const dateStr = `${year}-${month}-${day}`
-      parts.push(`updated:>${dateStr}`)
+      // Don't reset parts array - keep the date filter and other filters
+      // Just add the advanced difficulty labels
       parts.push('(label:"expert" OR label:"advanced" OR label:"hard" OR label:"difficult" OR label:"complex" OR label:"challenging")')
       parts.push('-label:"good first issue"')
       parts.push('-label:"good-first-issue"')
@@ -180,22 +170,26 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
     }
   }
   
-  if (params.selectedDifficulty !== 'advanced' && params.searchTerm && params.searchTerm.trim()) {
+  // Add search term (works with all difficulty levels)
+  if (params.searchTerm && params.searchTerm.trim()) {
     parts.push(params.searchTerm.trim())
   }
   
-  if (params.selectedDifficulty !== 'advanced' && params.selectedFramework) {
+  // Add framework filter (works with all difficulty levels)
+  if (params.selectedFramework) {
     const frameworkQuery = getFrameworkSearch(params.selectedFramework)
     if (frameworkQuery) {
       parts.push(frameworkQuery)
     }
   }
   
-  if (params.selectedDifficulty !== 'advanced' && params.selectedLanguage) {
+  // Add language filter (works with all difficulty levels)
+  if (params.selectedLanguage) {
     parts.push(`language:${params.selectedLanguage}`)
   }
   
-  if (!params.selectedDifficulty && params.selectedCategories && params.selectedCategories.length > 0 && !params.selectedCategories.includes('all')) {
+  // Add category filters (only if no difficulty is selected, or if it's not advanced)
+  if (params.selectedDifficulty !== 'advanced' && params.selectedCategories && params.selectedCategories.length > 0 && !params.selectedCategories.includes('all')) {
     const categoryQueries = params.selectedCategories.map((cat) => `label:"${cat}"`)
     if (categoryQueries.length === 1) {
       parts.push(categoryQueries[0])
@@ -204,12 +198,14 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
     }
   }
   
-  if (!params.selectedDifficulty && params.selectedType) {
+  // Add type filter (only if no difficulty is selected, or if it's not advanced)
+  if (params.selectedDifficulty !== 'advanced' && params.selectedType) {
     if (!params.selectedCategories || !params.selectedCategories.includes(params.selectedType)) {
       parts.push(`label:"${params.selectedType}"`)
     }
   }
   
+  // Add custom labels (works with all difficulty levels)
   if (params.selectedLabels && params.selectedLabels.length > 0) {
     params.selectedLabels.forEach((l) => parts.push(`label:"${l}"`))
   }
@@ -227,18 +223,12 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
                        (params.selectedLabels && params.selectedLabels.length > 0) ||
                        (params.searchTerm && params.searchTerm.trim())
   
-  const baseDateFilter = `updated:>${sevenDaysAgoStr}`
+  const baseDateFilter = `updated:>${thirtyDaysAgoStr}`
   
+  // If no filters are applied, show good first issues and help wanted
   if (!hasAnyFilter && query === `state:open type:issue no:assignee ${baseDateFilter}`) {
     return `state:open type:issue no:assignee ${baseDateFilter} (label:"good first issue" OR label:"help wanted")`
   }
-
-  if (params.selectedDifficulty === 'advanced') {
-    const advancedQuery = `state:open type:issue no:assignee ${baseDateFilter} (label:"expert" OR label:"advanced" OR label:"hard" OR label:"difficult" OR label:"complex" OR label:"challenging") -label:"good first issue" -label:"good-first-issue" -label:"first-timers-only" -label:"help wanted" -label:"help-wanted"`
-    return advancedQuery
-  }
-  
-  // Remove unused dateStr variable
   
   return query
 }
