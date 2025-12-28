@@ -25,7 +25,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors font-mono">
       <Header
         title="IssueFinder"
         searchTerm={searchTerm}
