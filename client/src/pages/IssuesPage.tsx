@@ -76,7 +76,7 @@ const IssuesPage: React.FC = () => {
           <span className="text-sm font-semibold uppercase tracking-wide text-green-600 dark:text-green-400">Active Issues Only</span>
         </div>
         <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-3">Browse Active Issues</h1>
-        <p className="text-lg text-slate-600 dark:text-slate-400">Discover real-time open source issues updated in the last 7 days</p>
+        <p className="text-lg text-slate-600 dark:text-slate-400">Discover real-time open source issues updated in the last month</p>
       </div>
 
       <MobileCategoryTabs
