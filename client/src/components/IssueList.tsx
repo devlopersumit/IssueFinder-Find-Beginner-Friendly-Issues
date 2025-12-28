@@ -33,18 +33,27 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
   const [items, setItems] = useState<IssueItem[]>([])
   const [repoLanguages, setRepoLanguages] = useState<Record<string, string[]>>({})
   const languagesFetchedRef = useRef<Set<string>>(new Set())
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true)
   const { data, isLoading, error } = useFetchIssues(query, page, perPage)
   
   // Filter out rate limit errors - we handle them silently with cached data
   const displayError = error && !error.message.toLowerCase().includes('rate limit') ? error : null
   const { saveIssue, removeIssue, isSaved } = useSavedIssues()
-
+  
   useEffect(() => {
     setPage(1)
     setItems([])
     languagesFetchedRef.current = new Set()
     setRepoLanguages({})
+    setIsInitialLoad(true)
   }, [query])
+  
+  // Track when loading completes
+  useEffect(() => {
+    if (!isLoading && data) {
+      setIsInitialLoad(false)
+    }
+  }, [isLoading, data])
 
   useEffect(() => {
     if (data?.items) {
@@ -238,7 +247,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
               <p className="text-xs font-semibold uppercase tracking-wide text-green-600 dark:text-green-400">Active Issues</p>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Real-Time Active Issues</h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Updated in the last 7 days</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Updated in the last month</p>
           </div>
           <div className="inline-flex items-center gap-3 rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm dark:border-gray-600 dark:from-gray-800 dark:to-gray-700 dark:text-slate-300">
             {isLoading && displayItems.length === 0 ? (
@@ -275,8 +284,8 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
           </div>
         </div>
 
-        {/* Enhanced Loading Display */}
-        {isLoading && displayItems.length === 0 && (
+        {/* Enhanced Loading Display - Show when loading or initial load */}
+        {(isLoading || isInitialLoad) && displayItems.length === 0 && (
           <div className="mt-8 rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-8 dark:border-blue-800 dark:from-blue-900/20 dark:to-indigo-900/20">
             <div className="flex flex-col items-center justify-center gap-4">
               <svg className="h-10 w-10 animate-spin text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24">
@@ -285,16 +294,16 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
               </svg>
               <div className="text-center">
                 <p className="text-lg font-bold text-blue-900 dark:text-blue-200">Fetching Active Issues</p>
-                <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">Searching GitHub for issues updated in the last 7 days...</p>
+                <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">Searching GitHub for issues updated in the last month...</p>
               </div>
             </div>
             <div className="mt-6">
-              <LoadingProgress isLoading={isLoading} />
+              <LoadingProgress isLoading={isLoading || isInitialLoad} />
             </div>
           </div>
         )}
 
-        {displayItems.length === 0 && !isLoading && !displayError && (
+        {displayItems.length === 0 && !isLoading && !displayError && !isInitialLoad && (
           <div className="mt-10 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-12 text-center dark:border-gray-700 dark:bg-gray-800/40">
             <svg className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -348,7 +357,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
         )}
 
         {/* Issues Grid */}
-        {isLoading && displayItems.length === 0 ? (
+        {(isLoading || isInitialLoad) && displayItems.length === 0 ? (
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, idx) => (
               <article
