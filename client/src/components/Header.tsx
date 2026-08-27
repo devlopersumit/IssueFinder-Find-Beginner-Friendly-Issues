@@ -198,7 +198,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'IssueFinder', searchTerm, onSe
               </svg>
             </button>
             <a
-              href="https://github.com/devlopersumit/IssueFinder-Find-Beginner-Friendly-Issues"
+              href="https://github.com/sumitjhacodes/IssueFinder-Find-Beginner-Friendly-Issues"
               target="_blank"
               rel="noreferrer"
               className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-200 dark:border-gray-700 dark:bg-gray-800 dark:text-slate-300 dark:hover:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white"

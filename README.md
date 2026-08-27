@@ -218,7 +218,7 @@ IssueHub/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/devlopersumit/Issuefinder.git
+   git clone https://github.com/sumitjhacodes/Issuefinder.git
    cd IssueHub
    ```
 
@@ -400,7 +400,7 @@ This project is licensed under the ISC License.
 
 **Sumit Jha**
 
-- GitHub: [@devlopersumit](https://github.com/devlopersumit)
+- GitHub: [@sumitjhacodes](https://github.com/sumitjhacodes)
 - LinkedIn: [Sumit Jha](https://www.linkedin.com/in/sumit-jha)
 - Twitter: [@_sumitjha_](https://x.com/_sumitjha_)
 
