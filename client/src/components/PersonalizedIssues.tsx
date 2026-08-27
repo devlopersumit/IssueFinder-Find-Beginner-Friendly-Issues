@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { usePersonalizedIssues } from '../hooks/usePersonalizedIssues'
 import { type IssueMatch } from '../utils/issueMatcher'
 import { detectDifficulty } from '../utils/difficulty'
+import { buildGitHubQuery } from '../utils/queryBuilder'
 
 type PersonalizedIssuesProps = {
   className?: string
@@ -12,7 +13,7 @@ const PersonalizedIssues: React.FC<PersonalizedIssuesProps> = ({ className = '',
   const [inputValue, setInputValue] = useState<string>('')
   const [displayLimit, setDisplayLimit] = useState<number>(limit)
   const { matchedIssues, isLoading, error, profile, loadProfileFromGitHub } = usePersonalizedIssues(
-    'is:open is:issue no:assignee label:"good first issue"',
+    buildGitHubQuery({ selectedCategories: ['good first issue'] }),
     50 // Fetch more issues for "Show More"
   )
 
