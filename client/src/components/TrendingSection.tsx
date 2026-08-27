@@ -10,7 +10,7 @@ import FreshnessIndicator from './FreshnessIndicator'
 const TrendingSection: React.FC = () => {
   const trendingQuery = buildGitHubQuery({
     selectedCategories: ['good first issue'],
-    selectedLastActivity: 'week'
+    selectedLastActivity: 'last-week'
   })
 
   const { data, isLoading } = useFetchIssues(trendingQuery, 1, 6)
