@@ -112,7 +112,7 @@ const HomePage: React.FC = () => {
         </svg>
       ),
       title: 'Fresh Issues Only',
-      description: 'See only active issues updated in the last 60 days'
+      description: 'See only fresh issues from actively maintained projects'
     },
     {
       icon: (
