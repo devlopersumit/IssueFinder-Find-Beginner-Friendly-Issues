@@ -1,39 +1,89 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { buildGitHubQuery } from '../utils/queryBuilder'
+import { HEALTH_THRESHOLDS } from '../utils/repoHealth'
+import { getIssuesCached, setIssuesCached } from '../utils/requestCache'
 
-type Highlight = {
+type QualitySignal = {
   label: string
   value: string
   description: string
 }
 
-const highlights: Highlight[] = [
+const qualitySignals: QualitySignal[] = [
   {
-    label: 'Fresh Issues',
-    value: '1.2k+',
-    description: 'Active tickets ready for contribution',
+    label: 'Issue freshness',
+    value: '≤ 7 days',
+    description: 'Only issues with recent activity make it through',
   },
   {
-    label: 'Languages',
-    value: '25',
-    description: 'Auto-detected tech stacks and tags',
+    label: 'Repo maintenance',
+    value: `≤ ${HEALTH_THRESHOLDS.maxDaysSincePush} days`,
+    description: 'Repos must have been pushed to recently',
   },
   {
-    label: 'Curated Repos',
-    value: '320',
-    description: 'Hand reviewed projects worth your time',
+    label: 'Project trust',
+    value: `≥ ${HEALTH_THRESHOLDS.minStars}★ / ${HEALTH_THRESHOLDS.minForks}⑂`,
+    description: 'Stars or forks signal a real community',
   },
   {
-    label: 'Filters',
-    value: '40+',
-    description: 'Dial in difficulty, type, and frameworks',
+    label: 'Difficulty tags',
+    value: 'Auto',
+    description: 'Beginner, intermediate, and advanced labels detected',
   },
 ]
 
+function formatCount(count: number): string {
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}k`
+  return count.toLocaleString()
+}
+
 const Hero: React.FC = () => {
+  const [liveIssueCount, setLiveIssueCount] = useState<number | null>(null)
+  const [isLoadingCount, setIsLoadingCount] = useState(true)
+
+  useEffect(() => {
+    const query = buildGitHubQuery({})
+    const cacheKey = `hero_issue_count_${query}`
+
+    const cached = getIssuesCached<number>(cacheKey)
+    if (cached !== null) {
+      setLiveIssueCount(cached)
+      setIsLoadingCount(false)
+      return
+    }
+
+    const controller = new AbortController()
+
+    async function fetchCount() {
+      try {
+        const url = `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&per_page=1`
+        const response = await fetch(url, {
+          headers: { Accept: 'application/vnd.github+json' },
+          signal: controller.signal,
+        })
+
+        if (!response.ok) return
+
+        const data = await response.json()
+        if (typeof data.total_count === 'number') {
+          setIssuesCached(cacheKey, data.total_count)
+          setLiveIssueCount(data.total_count)
+        }
+      } catch {
+        // silently fail — criteria cards still show value
+      } finally {
+        setIsLoadingCount(false)
+      }
+    }
+
+    fetchCount()
+    return () => controller.abort()
+  }, [])
+
   return (
     <section className="relative overflow-hidden border-b border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] font-mono">
-      {/* Terminal-style header bar */}
       <div className="border-b border-gray-300 dark:border-[#30363d] bg-gray-50 dark:bg-[#161b22] px-4 py-2">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
@@ -100,7 +150,9 @@ const Hero: React.FC = () => {
 
             <div className="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600 dark:text-[#8b949e] lg:justify-start px-2 sm:px-0">
               <span className="text-emerald-600 dark:text-[#7ee787] flex-shrink-0">✓</span>
-              <span className="text-center sm:text-left">Fresh issues updated every hour. All ready for new contributors.</span>
+              <span className="text-center sm:text-left">
+                Live data from GitHub — filtered for freshness and repo health, refreshed every 15 minutes.
+              </span>
             </div>
           </div>
 
@@ -109,19 +161,51 @@ const Hero: React.FC = () => {
               <div className="mb-4 sm:mb-6 border-b border-gray-300 dark:border-[#30363d] pb-3 sm:pb-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-emerald-600 dark:text-[#7ee787] text-sm">▶</span>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-[#8b949e]">Why developers love IssueFinder</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-[#8b949e]">
+                    How we filter issues
+                  </p>
                 </div>
-                <h2 className="mt-2 text-xl sm:text-2xl font-semibold text-gray-900 dark:text-[#c9d1d9]">Save time, find better projects</h2>
+                <h2 className="mt-2 text-xl sm:text-2xl font-semibold text-gray-900 dark:text-[#c9d1d9]">
+                  Quality rules, not fake stats
+                </h2>
                 <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-gray-600 dark:text-[#8b949e] leading-relaxed">
-                  No more endless scrolling. We filter out the noise and show you only the issues that match what you're looking for.
+                  Every issue passes these checks before we show it. No inflated numbers — just the criteria we actually use.
                 </p>
               </div>
+
+              <div className="mb-4 sm:mb-6 rounded-lg border border-emerald-300 dark:border-[#238636] bg-emerald-50 dark:bg-[#0d4432]/40 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-[#7ee787]">
+                  Matching on GitHub right now
+                </p>
+                <p className="mt-1 text-2xl font-bold text-emerald-800 dark:text-[#7ee787]">
+                  {isLoadingCount ? (
+                    <span className="inline-block h-7 w-24 animate-pulse rounded bg-emerald-200 dark:bg-[#238636]/50" />
+                  ) : liveIssueCount !== null ? (
+                    `${formatCount(liveIssueCount)}+ issues`
+                  ) : (
+                    'Live from GitHub'
+                  )}
+                </p>
+                <p className="mt-1 text-xs text-emerald-700/80 dark:text-[#7ee787]/80">
+                  Open, unassigned, updated this week — good first issue or help wanted
+                </p>
+              </div>
+
               <dl className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-                {highlights.map((item) => (
-                  <div key={item.label} className="border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] p-3 sm:p-4 text-left">
-                    <dt className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-[#8b949e]">{item.label}</dt>
-                    <dd className="mt-1 sm:mt-2 text-xl sm:text-2xl font-semibold text-blue-600 dark:text-[#58a6ff]">{item.value}</dd>
-                    <p className="mt-1 text-xs text-gray-600 dark:text-[#8b949e] leading-relaxed">{item.description}</p>
+                {qualitySignals.map((item) => (
+                  <div
+                    key={item.label}
+                    className="border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] p-3 sm:p-4 text-left"
+                  >
+                    <dt className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-[#8b949e]">
+                      {item.label}
+                    </dt>
+                    <dd className="mt-1 sm:mt-2 text-lg sm:text-xl font-semibold text-blue-600 dark:text-[#58a6ff]">
+                      {item.value}
+                    </dd>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-[#8b949e] leading-relaxed">
+                      {item.description}
+                    </p>
                   </div>
                 ))}
               </dl>
