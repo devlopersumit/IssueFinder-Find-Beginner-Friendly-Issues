@@ -5,6 +5,9 @@ import { detectDifficulty } from '../utils/difficulty'
 import type { NaturalLanguage } from '../utils/languageDetection'
 import { filterByLanguage } from '../utils/languageDetection'
 import { fetchRepositoryLanguages } from '../utils/repoLanguages'
+import { fetchRepositoryHealthBatch } from '../utils/repoHealth'
+import { calculateFreshness } from '../utils/issueFreshness'
+import FreshnessIndicator from './FreshnessIndicator'
 import { useSavedIssues } from '../hooks/useSavedIssues'
 import { LoadingProgress } from './LoadingProgress'
 
@@ -32,7 +35,10 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
   
   const [items, setItems] = useState<IssueItem[]>([])
   const [repoLanguages, setRepoLanguages] = useState<Record<string, string[]>>({})
+  const [repoHealth, setRepoHealth] = useState<Record<string, boolean>>({})
+  const [isCheckingHealth, setIsCheckingHealth] = useState<boolean>(false)
   const languagesFetchedRef = useRef<Set<string>>(new Set())
+  const healthFetchedRef = useRef<Set<string>>(new Set())
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true)
   const { data, isLoading, error } = useFetchIssues(query, page, perPage)
   
@@ -44,7 +50,10 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
     setPage(1)
     setItems([])
     languagesFetchedRef.current = new Set()
+    healthFetchedRef.current = new Set()
     setRepoLanguages({})
+    setRepoHealth({})
+    setIsCheckingHealth(false)
     setIsInitialLoad(true)
   }, [query])
   
@@ -85,6 +94,30 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
           fetchLanguagesWithDelay(repoUrl, index * 200)
         })
       }
+
+      const reposNeedingHealth = data.items
+        .map((item) => item.repository_url)
+        .filter((url) => url && !healthFetchedRef.current.has(url))
+
+      if (reposNeedingHealth.length > 0) {
+        const uniqueHealthRepos = Array.from(new Set(reposNeedingHealth))
+        uniqueHealthRepos.forEach((url) => healthFetchedRef.current.add(url))
+
+        setIsCheckingHealth(true)
+        fetchRepositoryHealthBatch(uniqueHealthRepos)
+          .then((healthResults) => {
+            setRepoHealth((prev) => {
+              const next = { ...prev }
+              for (const [url, info] of Object.entries(healthResults)) {
+                next[url] = info.isHealthy
+              }
+              return next
+            })
+          })
+          .finally(() => setIsCheckingHealth(false))
+      } else if (data.items.length === 0) {
+        setIsCheckingHealth(false)
+      }
     } else {
       setItems([])
     }
@@ -97,7 +130,16 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
       result = filterByLanguage(result, naturalLanguageFilter)
     }
 
-    // Sort by most recently updated (active issues first)
+    result = result.filter((issue) => {
+      const freshness = calculateFreshness(issue.updated_at, issue.created_at)
+      if (freshness.status === 'inactive') return false
+
+      const healthChecked = repoHealth[issue.repository_url]
+      if (healthChecked === false) return false
+
+      return true
+    })
+
     result = [...result].sort((a, b) => {
       const dateA = new Date(a.updated_at || a.created_at).getTime()
       const dateB = new Date(b.updated_at || b.created_at).getTime()
@@ -105,7 +147,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
     })
 
     return result
-  }, [items, naturalLanguageFilter])
+  }, [items, naturalLanguageFilter, repoHealth])
 
   const totalCount = data?.total_count ?? 0
   const githubMaxResults = 1000
@@ -115,6 +157,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
   const hasPrevPage = page > 1
   const hasNextPage = page < totalPages
   const displayItems = filteredAndSortedItems
+  const isVerifying = isCheckingHealth && items.length > 0
   
   useEffect(() => {
     if (page > totalPages && totalPages > 0) {
@@ -246,8 +289,8 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
               <p className="text-xs font-semibold uppercase tracking-wide text-green-600 dark:text-green-400">Active Issues</p>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Real-Time Active Issues</h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Updated in the last month</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Fresh Issues from Active Projects</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Updated in the last 7 days from well-maintained repos</p>
           </div>
           <div className="inline-flex items-center gap-3 rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm dark:border-gray-600 dark:from-gray-800 dark:to-gray-700 dark:text-slate-300">
             {isLoading && displayItems.length === 0 ? (
@@ -294,7 +337,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
               </svg>
               <div className="text-center">
                 <p className="text-lg font-bold text-blue-900 dark:text-blue-200">Fetching Active Issues</p>
-                <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">Searching GitHub for issues updated in the last month...</p>
+                <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">Searching GitHub for fresh issues from actively maintained projects...</p>
               </div>
             </div>
             <div className="mt-6">
@@ -303,14 +346,24 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
           </div>
         )}
 
-        {displayItems.length === 0 && !isLoading && !displayError && !isInitialLoad && (
+        {isVerifying && (
+          <div className="mt-4 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Verifying repository health...
+          </div>
+        )}
+
+        {displayItems.length === 0 && !isLoading && !displayError && !isInitialLoad && !isVerifying && (
           <div className="mt-10 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-12 text-center dark:border-gray-700 dark:bg-gray-800/40">
             <svg className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <h3 className="mt-3 text-lg font-semibold text-slate-900 dark:text-slate-100">We couldn't find any issues matching your criteria</h3>
+            <h3 className="mt-3 text-lg font-semibold text-slate-900 dark:text-slate-100">No fresh issues from healthy projects match your criteria</h3>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Try removing some filters or search for:
+              We only show issues updated in the last 7 days from repos with 50+ stars or 10+ forks, pushed within 14 days. Try:
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               {['good first issue', 'help wanted', 'documentation', 'bug'].map((suggestion) => (
@@ -389,6 +442,7 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
                 const difficulty = detectDifficulty(issue.labels || [])
                 const repoLangs = repoLanguages[issue.repository_url] || []
                 const primaryLanguage = repoLangs.length > 0 ? repoLangs[0] : null
+                const freshness = calculateFreshness(issue.updated_at, issue.created_at)
 
                 const saved = isSaved(issue.id)
                 
@@ -434,6 +488,11 @@ const IssueList: React.FC<IssueListProps> = ({ className = '', query, naturalLan
                             </svg>
                           )}
                         </button>
+                        <FreshnessIndicator
+                          status={freshness.status}
+                          label={freshness.label}
+                          description={freshness.description}
+                        />
                         <DifficultyBadge difficulty={difficulty} />
                       </div>
                     </div>
