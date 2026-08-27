@@ -96,7 +96,7 @@ function getLastActivityQuery(activity: string | null): string {
         date = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
         break
       case 'active':
-        date = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        date = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
         break
       default:
         return ''
@@ -122,22 +122,18 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
   parts.push('no:assignee')
   
   const now = new Date()
-  // Default to issues updated in last 1 month (30 days)
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-  
-  const thirtyDaysAgoStr = `${thirtyDaysAgo.getFullYear()}-${String(thirtyDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(thirtyDaysAgo.getDate()).padStart(2, '0')}`
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const sevenDaysAgoStr = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(sevenDaysAgo.getDate()).padStart(2, '0')}`
   
   if (params.selectedLastActivity) {
     const activityQuery = getLastActivityQuery(params.selectedLastActivity)
     if (activityQuery) {
       parts.push(activityQuery)
     } else {
-      // Default to issues updated in last 1 month
-      parts.push(`updated:>${thirtyDaysAgoStr}`)
+      parts.push(`updated:>${sevenDaysAgoStr}`)
     }
   } else {
-    // Default to issues updated in last 1 month
-    parts.push(`updated:>${thirtyDaysAgoStr}`)
+    parts.push(`updated:>${sevenDaysAgoStr}`)
   }
   
   if (params.selectedDifficulty) {
@@ -223,7 +219,7 @@ export function buildGitHubQuery(params: QueryBuilderParams): string {
                        (params.selectedLabels && params.selectedLabels.length > 0) ||
                        (params.searchTerm && params.searchTerm.trim())
   
-  const baseDateFilter = `updated:>${thirtyDaysAgoStr}`
+  const baseDateFilter = `updated:>${sevenDaysAgoStr}`
   
   // If no filters are applied, show good first issues and help wanted
   if (!hasAnyFilter && query === `state:open type:issue no:assignee ${baseDateFilter}`) {
