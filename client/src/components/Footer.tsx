@@ -7,7 +7,7 @@ type FooterProps = {
 }
 
 const Footer: React.FC<FooterProps> = ({
-  githubUrl = 'https://github.com/devlopersumit',
+  githubUrl = 'https://github.com/sumitjhacodes',
   linkedinUrl = 'https://www.linkedin.com/in/sumit-jha?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app',
   twitterUrl = 'https://x.com/_sumitjha_?t=4nSWLPjfWOEhS06PoX9-Lg&s=09'
 }) => {
