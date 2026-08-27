@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { getDailyCached, setDailyCached } from '../utils/requestCache'
+import { getIssuesCached, setIssuesCached } from '../utils/requestCache'
 import { 
   isRateLimited, 
   updateRateLimitInfo, 
@@ -74,7 +74,7 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
         }
 
         // Always check cache first
-        const cached = getDailyCached<GithubSearchResponse>(cacheKey)
+        const cached = getIssuesCached<GithubSearchResponse>(cacheKey)
         if (cached) {
           // Show loading state briefly before showing cached data
           await sleep(500) // Small delay to show loading indicator
@@ -97,7 +97,7 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
           const resetTime = getRateLimitResetTime()
           if (resetTime) {
             // Use any available cached data (even from previous days)
-            const anyCached = getDailyCached<GithubSearchResponse>(cacheKey)
+            const anyCached = getIssuesCached<GithubSearchResponse>(cacheKey)
             if (anyCached) {
               setData(anyCached)
               setIsLoading(false)
@@ -137,7 +137,7 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
             
             if (rateLimitRemaining === '0' && rateLimitReset) {
               // Rate limited - use cached data if available, otherwise wait and retry
-              const cached = getDailyCached<GithubSearchResponse>(cacheKey)
+              const cached = getIssuesCached<GithubSearchResponse>(cacheKey)
               if (cached) {
                 setData(cached)
                 setIsLoading(false)
@@ -193,13 +193,13 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
         }
 
         const json: GithubSearchResponse = await response.json()
-        setDailyCached(cacheKey, json)
+        setIssuesCached(cacheKey, json)
         setData(json)
       } catch (err: unknown) {
         if ((err as any)?.name === 'AbortError') return
         
         // Check if we have cached data to fall back to
-        const cached = getDailyCached<GithubSearchResponse>(cacheKey)
+        const cached = getIssuesCached<GithubSearchResponse>(cacheKey)
         if (cached) {
           setData(cached)
           setIsLoading(false)
@@ -245,7 +245,7 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
 
         if (response.ok) {
           const json: GithubSearchResponse = await response.json()
-          setDailyCached(cacheKey, json)
+          setIssuesCached(cacheKey, json)
           setData(json)
         }
       } catch {
