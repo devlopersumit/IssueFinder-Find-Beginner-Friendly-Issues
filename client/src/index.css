@@ -4,33 +4,34 @@
 
 @layer base {
   :root {
-    --bg-primary: #f8fafc;
+    --bg-primary: #fafafa;
     --bg-secondary: #ffffff;
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --border-color: #e2e8f0;
-    --accent-color: #10b981;
+    --text-primary: #141414;
+    --text-secondary: #52525b;
+    --border-color: #e4e4e7;
+    --accent-color: #0d9488;
   }
 
   html.dark {
-    --bg-primary: #0a0e1a;
-    --bg-secondary: #111827;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --border-color: #1e293b;
-    --accent-color: #34d399;
+    --bg-primary: #09090b;
+    --bg-secondary: #18181b;
+    --text-primary: #fafafa;
+    --text-secondary: #a1a1aa;
+    --border-color: #27272a;
+    --accent-color: #2dd4bf;
     color-scheme: dark;
   }
 
+  html {
+    @apply antialiased;
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply font-mono antialiased;
+    @apply text-base leading-relaxed antialiased;
+    font-family: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    transition: background-color 300ms ease, color 300ms ease;
-  }
-  
-  html {
-    @apply font-mono;
   }
 
   h1,
@@ -39,57 +40,49 @@
   h4,
   h5,
   h6 {
-    @apply font-semibold tracking-tight;
+    font-family: Newsreader, Georgia, ui-serif, serif;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
     color: var(--text-primary);
   }
 
-  p,
-  span,
-  li {
-    color: var(--text-secondary);
+  a {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+    --tw-ring-color: var(--accent-color);
   }
 
-  a {
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
+  a:focus-visible {
+    outline: none;
   }
 
   button {
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+    --tw-ring-color: var(--accent-color);
   }
 
   input,
   textarea,
   select {
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+    --tw-ring-color: var(--accent-color);
   }
 }
 
-/* Smooth transitions for theme changes */
-html {
-  transition: background-color 300ms ease, color 300ms ease;
-}
-
-/* Smooth transitions for all elements with dark mode classes */
-[class*="dark:"] {
-  transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease;
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  :root {
-    --text-primary: #000000;
-    --text-secondary: #1a1a1a;
-    --border-color: #000000;
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-md bg-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800 dark:bg-white dark:text-ink dark:hover:bg-zinc-200;
   }
 
-  html.dark {
-    --text-primary: #ffffff;
-    --text-secondary: #e0e0e0;
-    --border-color: #ffffff;
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-md border border-paper-line bg-white px-5 py-2.5 text-sm font-semibold text-ink transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800;
+  }
+
+  .surface {
+    @apply border border-paper-line bg-white dark:border-zinc-800 dark:bg-zinc-900;
   }
 }
 
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -100,74 +93,13 @@ html {
   }
 }
 
-@layer utilities {
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-  }
-
-  html.dark .custom-scrollbar::-webkit-scrollbar-track {
-    background: #1e293b;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 10px;
-  }
-
-  html.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #475569;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-  }
-
-  html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
-  }
-
-  .focus-visible-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
-  }
-
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
-  }
-
-  .sr-only-focusable:focus {
-    position: static;
-    width: auto;
-    height: auto;
-    padding: inherit;
-    margin: inherit;
-    overflow: visible;
-    clip: auto;
-    white-space: normal;
-  }
-}
-
-/* Hide scrollbar for horizontal scrolling on mobile */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
+  display: none;
 }
 
 @keyframes progress {
@@ -183,31 +115,24 @@ html {
   animation: progress 2s linear infinite;
 }
 
-@keyframes gradient-border {
-  0% {
-    background-position: 0% 50%;
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-@keyframes pulse-slow {
-  0%, 100% {
-    opacity: 0.2;
-  }
-  50% {
-    opacity: 0.3;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.animate-gradient-border {
-  animation: gradient-border 3s ease-in-out infinite;
+.animate-fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.animate-pulse-slow {
-  animation: pulse-slow 3s ease-in-out infinite;
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up {
+    animation: none;
+  }
 }
+
