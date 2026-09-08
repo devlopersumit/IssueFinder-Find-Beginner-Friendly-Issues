@@ -202,7 +202,7 @@ const Hero: React.FC = () => {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-40" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
                 </span>
-                {isLive ? 'Live from GitHub' : isLoading ? 'Loading…' : 'Sample issues'}
+                {isLive ? 'Refreshes every 45 min' : isLoading ? 'Loading…' : 'Sample issues'}
               </span>
             </div>
             <ul className="divide-y divide-paper-line dark:divide-zinc-800">

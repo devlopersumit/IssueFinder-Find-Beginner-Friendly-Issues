@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { getIssuesCached, setIssuesCached } from '../utils/requestCache'
-import { 
-  isRateLimited, 
-  updateRateLimitInfo, 
-  getRateLimitResetTime 
+import {
+  getIssuesCacheHit,
+  setIssuesCached,
+  shareInflight,
+} from '../utils/requestCache'
+import {
+  isRateLimited,
+  updateRateLimitInfo,
+  getRateLimitResetTime,
 } from '../utils/rateLimitManager'
 
 type GithubIssueItem = {
@@ -19,7 +23,7 @@ type GithubIssueItem = {
   comments?: number
 }
 
-type GithubSearchResponse = { 
+type GithubSearchResponse = {
   total_count: number
   incomplete_results: boolean
   items: GithubIssueItem[]
@@ -32,20 +36,67 @@ type UseFetchIssuesResult = {
 }
 
 const MAX_RETRIES = 3
-const INITIAL_RETRY_DELAY = 1000 // 1 second
+const INITIAL_RETRY_DELAY = 1000
 
 async function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export function useFetchIssues(query: string, page: number = 1, perPage: number = 20): UseFetchIssuesResult {
+async function requestIssues(
+  query: string,
+  page: number,
+  perPage: number,
+  signal: AbortSignal
+): Promise<GithubSearchResponse> {
+  const url = `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&sort=updated&order=desc&page=${page}&per_page=${perPage}`
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/vnd.github+json',
+    },
+    signal,
+  })
+
+  updateRateLimitInfo(response.headers)
+
+  if (!response.ok) {
+    if (response.status === 403) {
+      const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
+      if (rateLimitRemaining === '0') {
+        throw new Error('Rate limit')
+      }
+      throw new Error(
+        'Access forbidden. Your search might be too complex. Try simplifying your filters.'
+      )
+    }
+    if (response.status === 422) {
+      throw new Error('Invalid search query. Try adjusting your filters.')
+    }
+    if (response.status >= 500) {
+      throw new Error('GitHub service is temporarily unavailable. Please try again later.')
+    }
+    throw new Error('Unable to fetch issues. Please try again.')
+  }
+
+  return response.json()
+}
+
+export function useFetchIssues(
+  query: string,
+  page: number = 1,
+  perPage: number = 20
+): UseFetchIssuesResult {
   const [data, setData] = useState<GithubSearchResponse | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<Error | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const retryTimeoutRef = useRef<number | null>(null)
 
-  const cacheKey = useMemo(() => `issues_${query}_${page}_${perPage}`, [query, page, perPage])
+  const cacheKey = useMemo(
+    () => `issues_${query}_${page}_${perPage}`,
+    [query, page, perPage]
+  )
 
   useEffect(() => {
     if (abortRef.current) {
@@ -55,17 +106,15 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
       clearTimeout(retryTimeoutRef.current)
       retryTimeoutRef.current = null
     }
-    
+
     const controller = new AbortController()
     abortRef.current = controller
 
     async function fetchIssues(retryCount = 0): Promise<void> {
-      // Check if aborted
       if (controller.signal.aborted) return
 
-      setIsLoading(true)
       setError(null)
-      
+
       try {
         if (!query || query.trim() === '') {
           setData({ total_count: 0, incomplete_results: false, items: [] })
@@ -73,183 +122,128 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
           return
         }
 
-        // Always check cache first
-        const cached = getIssuesCached<GithubSearchResponse>(cacheKey)
-        if (cached) {
-          // Show loading state briefly before showing cached data
-          await sleep(500) // Small delay to show loading indicator
-          
-          if (controller.signal.aborted) return
-          
-          setData(cached)
+        const hit = getIssuesCacheHit<GithubSearchResponse>(cacheKey)
+
+        // Fresh cache — serve only, no network
+        if (hit?.fresh) {
+          setData(hit.data)
           setIsLoading(false)
-          
-          // If we have cached data, still try to refresh in background if not rate limited
+          return
+        }
+
+        // Stale cache — show it, then refresh once in background
+        if (hit && !hit.fresh) {
+          setData(hit.data)
+          setIsLoading(false)
+
           if (!isRateLimited()) {
-            // Fetch fresh data in background without blocking UI
-            fetchIssuesInBackground(controller)
+            void refreshInBackground()
           }
           return
         }
 
-        // Check if we're rate limited before making request
+        // No cache — must load
+        setIsLoading(true)
+
         if (isRateLimited()) {
           const resetTime = getRateLimitResetTime()
           if (resetTime) {
-            // Use any available cached data (even from previous days)
-            const anyCached = getIssuesCached<GithubSearchResponse>(cacheKey)
-            if (anyCached) {
-              setData(anyCached)
+            const waitTime = resetTime - Date.now()
+            if (waitTime > 0 && waitTime < 3600000) {
               setIsLoading(false)
-            } else {
-              // No cached data, wait for rate limit to reset and retry
-              const waitTime = resetTime - Date.now()
-              if (waitTime > 0 && waitTime < 3600000) { // Only wait up to 1 hour
-                setIsLoading(false)
-                retryTimeoutRef.current = setTimeout(() => {
-                  if (!controller.signal.aborted) {
-                    fetchIssues(0)
-                  }
-                }, waitTime + 1000) // Add 1 second buffer
-                return
-              }
-            }
-          }
-        }
-
-        const url = `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&sort=updated&order=desc&page=${page}&per_page=${perPage}`
-
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            Accept: 'application/vnd.github+json'
-          },
-          signal: controller.signal
-        })
-
-        // Update rate limit info from response headers
-        updateRateLimitInfo(response.headers)
-
-        if (!response.ok) {
-          if (response.status === 403) {
-            const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
-            const rateLimitReset = response.headers.get('X-RateLimit-Reset')
-            
-            if (rateLimitRemaining === '0' && rateLimitReset) {
-              // Rate limited - use cached data if available, otherwise wait and retry
-              const cached = getIssuesCached<GithubSearchResponse>(cacheKey)
-              if (cached) {
-                setData(cached)
-                setIsLoading(false)
-                
-                // Schedule automatic retry after rate limit resets
-                const resetTime = parseInt(rateLimitReset, 10) * 1000
-                const waitTime = resetTime - Date.now()
-                if (waitTime > 0 && waitTime < 3600000) {
-                  retryTimeoutRef.current = setTimeout(() => {
-                    if (!controller.signal.aborted) {
-                      fetchIssues(0)
-                    }
-                  }, waitTime + 1000)
+              retryTimeoutRef.current = window.setTimeout(() => {
+                if (!controller.signal.aborted) {
+                  fetchIssues(0)
                 }
-                return
-              }
-              
-              // No cached data - wait and retry automatically
-              const resetTime = parseInt(rateLimitReset, 10) * 1000
-              const waitTime = resetTime - Date.now()
-              if (waitTime > 0 && waitTime < 3600000) {
-                setIsLoading(true) // Keep loading state
-                retryTimeoutRef.current = setTimeout(() => {
-                  if (!controller.signal.aborted) {
-                    fetchIssues(0)
-                  }
-                }, waitTime + 1000)
-                return
-              }
-            } else {
-              // 403 but not rate limit - might be forbidden search
-              throw new Error(`Access forbidden. Your search might be too complex. Try simplifying your filters.`)
+              }, waitTime + 1000)
+              return
             }
           }
-          
-          if (response.status === 422) {
-            throw new Error(`Invalid search query. Try adjusting your filters.`)
-          }
-          
-          if (response.status >= 500) {
-            // Retry on server errors with exponential backoff
-            if (retryCount < MAX_RETRIES) {
-              const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount)
-              await sleep(delay)
-              if (!controller.signal.aborted) {
-                return fetchIssues(retryCount + 1)
-              }
-            }
-            throw new Error(`GitHub service is temporarily unavailable. Please try again later.`)
-          }
-          
-          throw new Error(`Unable to fetch issues. Please try again.`)
         }
 
-        const json: GithubSearchResponse = await response.json()
+        // Shared fetch is not tied to this mount's abort — unmounting Hero
+        // must not cancel an Issues page request for the same key.
+        const json = await shareInflight(cacheKey, () =>
+          requestIssues(query, page, perPage, new AbortController().signal)
+        )
+
+        if (controller.signal.aborted) return
+
         setIssuesCached(cacheKey, json)
         setData(json)
       } catch (err: unknown) {
-        if ((err as any)?.name === 'AbortError') return
-        
-        // Check if we have cached data to fall back to
-        const cached = getIssuesCached<GithubSearchResponse>(cacheKey)
-        if (cached) {
-          setData(cached)
-          setIsLoading(false)
-          // Don't set error if we have cached data
-          return
-        }
-        
-        if (err instanceof TypeError && err.message.includes('fetch')) {
-          setError(new Error('Network error. Please check your connection.'))
-        } else {
-          const errorMessage = (err as Error).message
-          // Only show error if it's not a rate limit error (we handle those silently)
-          if (!errorMessage.includes('Rate limit')) {
-            setError(err as Error)
-          } else {
-            // Rate limit error - try to use any cached data or wait
+        if ((err as { name?: string })?.name === 'AbortError') return
+        if (controller.signal.aborted) return
+
+        const message = (err as Error).message || ''
+
+        if (message.includes('Rate limit')) {
+          const cached = getIssuesCacheHit<GithubSearchResponse>(cacheKey)
+          if (cached) {
+            setData(cached.data)
             setIsLoading(false)
             return
           }
+
+          const resetTime = getRateLimitResetTime()
+          if (resetTime) {
+            const waitTime = resetTime - Date.now()
+            if (waitTime > 0 && waitTime < 3600000) {
+              setIsLoading(true)
+              retryTimeoutRef.current = window.setTimeout(() => {
+                if (!controller.signal.aborted) {
+                  fetchIssues(0)
+                }
+              }, waitTime + 1000)
+              return
+            }
+          }
+          setIsLoading(false)
+          return
         }
-        
+
+        if (message.includes('temporarily unavailable') && retryCount < MAX_RETRIES) {
+          const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount)
+          await sleep(delay)
+          if (!controller.signal.aborted) {
+            return fetchIssues(retryCount + 1)
+          }
+        }
+
+        const stale = getIssuesCacheHit<GithubSearchResponse>(cacheKey)
+        if (stale) {
+          setData(stale.data)
+          setIsLoading(false)
+          return
+        }
+
+        if (err instanceof TypeError && message.includes('fetch')) {
+          setError(new Error('Network error. Please check your connection.'))
+        } else {
+          setError(err as Error)
+        }
+
         setData({ total_count: 0, incomplete_results: false, items: [] })
       } finally {
-        setIsLoading(false)
+        if (!controller.signal.aborted) {
+          setIsLoading(false)
+        }
       }
     }
 
-    // Background fetch function that doesn't block UI
-    async function fetchIssuesInBackground(controller: AbortController): Promise<void> {
+    async function refreshInBackground(): Promise<void> {
       try {
-        if (isRateLimited()) return
-        
-        const url = `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&sort=updated&order=desc&page=${page}&per_page=${perPage}`
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            Accept: 'application/vnd.github+json'
-          },
-          signal: controller.signal
-        })
+        if (isRateLimited() || controller.signal.aborted) return
 
-        updateRateLimitInfo(response.headers)
+        const json = await shareInflight(cacheKey, () =>
+          requestIssues(query, page, perPage, new AbortController().signal)
+        )
 
-        if (response.ok) {
-          const json: GithubSearchResponse = await response.json()
-          setIssuesCached(cacheKey, json)
-          setData(json)
-        }
+        if (controller.signal.aborted) return
+        setIssuesCached(cacheKey, json)
+        setData(json)
       } catch {
-        // Silently fail background updates
+        // Keep serving stale cache
       }
     }
 
@@ -266,6 +260,3 @@ export function useFetchIssues(query: string, page: number = 1, perPage: number 
 
   return { data, isLoading, error }
 }
-
-
-
