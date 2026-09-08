@@ -12,6 +12,12 @@
     --accent-color: #0d9488;
   }
 
+  html {
+    @apply antialiased;
+    scroll-behavior: smooth;
+    color-scheme: light;
+  }
+
   html.dark {
     --bg-primary: #09090b;
     --bg-secondary: #18181b;
@@ -20,11 +26,6 @@
     --border-color: #27272a;
     --accent-color: #2dd4bf;
     color-scheme: dark;
-  }
-
-  html {
-    @apply antialiased;
-    scroll-behavior: smooth;
   }
 
   body {
@@ -130,9 +131,72 @@
   animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Smooth theme switching — enabled only while toggling (fallback) */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition:
+    background-color 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    fill 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    stroke 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    outline-color 0.55s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  transition-delay: 0s !important;
+}
+
+/* Circular reveal — same feel as sumitjha.space */
+@supports (view-transition-name: root) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  ::view-transition-old(root) {
+    z-index: 1;
+  }
+
+  ::view-transition-new(root) {
+    z-index: 2;
+  }
+
+  html[data-theme-vt='active']::view-transition-old(root) {
+    z-index: 1;
+  }
+
+  html[data-theme-vt='active']::view-transition-new(root) {
+    z-index: 9999;
+    animation: theme-vt-reveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes theme-vt-reveal {
+  from {
+    clip-path: circle(0px at var(--vt-x) var(--vt-y));
+  }
+  to {
+    clip-path: circle(var(--vt-r) at var(--vt-x) var(--vt-y));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up {
     animation: none;
+  }
+
+  html.theme-transitioning,
+  html.theme-transitioning *,
+  html.theme-transitioning *::before,
+  html.theme-transitioning *::after {
+    transition: none !important;
+  }
+
+  html[data-theme-vt='active']::view-transition-new(root) {
+    clip-path: none !important;
+    animation: none !important;
   }
 }
 

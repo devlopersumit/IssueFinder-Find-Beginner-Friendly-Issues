@@ -1,19 +1,23 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { flushSync } from 'react-dom'
 
 type Theme = 'light' | 'dark' | 'auto'
 
 interface ThemeContextType {
   theme: Theme
   effectiveTheme: 'light' | 'dark'
-  toggleTheme: () => void
+  toggleTheme: (event?: React.MouseEvent | MouseEvent) => void
   setTheme: (theme: Theme) => void
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
+/** Match sumitjha.space — slow circular reveal */
+const TRANSITION_MS = 550
+
 const getInitialTheme = (): Theme => {
   if (typeof window === 'undefined') return 'auto'
-  
+
   try {
     const saved = localStorage.getItem('theme')
     if (saved === 'dark' || saved === 'light' || saved === 'auto') {
@@ -22,7 +26,7 @@ const getInitialTheme = (): Theme => {
   } catch (e) {
     console.error('Error reading theme from localStorage:', e)
   }
-  
+
   return 'auto'
 }
 
@@ -38,9 +42,9 @@ const getEffectiveTheme = (theme: Theme): 'light' | 'dark' => {
 
 const applyTheme = (effectiveTheme: 'light' | 'dark') => {
   if (typeof window === 'undefined') return
-  
+
   const root = document.documentElement
-  
+
   if (effectiveTheme === 'dark') {
     root.classList.add('dark')
     root.setAttribute('data-theme', 'dark')
@@ -48,19 +52,43 @@ const applyTheme = (effectiveTheme: 'light' | 'dark') => {
     root.classList.remove('dark')
     root.setAttribute('data-theme', 'light')
   }
-  
+
   root.setAttribute('aria-label', `Theme: ${effectiveTheme}`)
+}
+
+const enableThemeTransition = () => {
+  const root = document.documentElement
+  root.classList.add('theme-transitioning')
+  window.setTimeout(() => {
+    root.classList.remove('theme-transitioning')
+  }, TRANSITION_MS)
+}
+
+const setRevealOrigin = (event?: React.MouseEvent | MouseEvent) => {
+  const root = document.documentElement
+  const x = event?.clientX ?? window.innerWidth - 40
+  const y = event?.clientY ?? 40
+  const endRadius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y)
+  )
+
+  root.style.setProperty('--vt-x', `${x}px`)
+  root.style.setProperty('--vt-y', `${y}px`)
+  root.style.setProperty('--vt-r', `${endRadius}px`)
 }
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(getInitialTheme)
-  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(() => getEffectiveTheme(getInitialTheme()))
+  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(() =>
+    getEffectiveTheme(getInitialTheme())
+  )
 
   useEffect(() => {
     const newEffectiveTheme = getEffectiveTheme(theme)
     setEffectiveTheme(newEffectiveTheme)
     applyTheme(newEffectiveTheme)
-    
+
     try {
       localStorage.setItem('theme', theme)
     } catch (e) {
@@ -71,13 +99,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (theme === 'auto' && typeof window !== 'undefined') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      
+
       const handleChange = (e: MediaQueryListEvent) => {
         const newEffectiveTheme = e.matches ? 'dark' : 'light'
+        enableThemeTransition()
         setEffectiveTheme(newEffectiveTheme)
         applyTheme(newEffectiveTheme)
       }
-      
+
       mediaQuery.addEventListener('change', handleChange)
       return () => mediaQuery.removeEventListener('change', handleChange)
     }
@@ -87,11 +116,57 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setThemeState(newTheme)
   }, [])
 
-  const toggleTheme = React.useCallback(() => {
-    setThemeState((prevTheme) => {
-      const current = getEffectiveTheme(prevTheme)
-      return current === 'dark' ? 'light' : 'dark'
-    })
+  const toggleTheme = React.useCallback((event?: React.MouseEvent | MouseEvent) => {
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    const applyNext = () => {
+      flushSync(() => {
+        setThemeState((prevTheme) => {
+          const current = getEffectiveTheme(prevTheme)
+          const next = current === 'dark' ? 'light' : 'dark'
+          setEffectiveTheme(next)
+          applyTheme(next)
+          try {
+            localStorage.setItem('theme', next)
+          } catch {
+            /* ignore */
+          }
+          return next
+        })
+      })
+    }
+
+    if (prefersReducedMotion) {
+      applyNext()
+      return
+    }
+
+    const doc = document as Document & {
+      startViewTransition?: (callback: () => void) => {
+        finished: Promise<void>
+        ready: Promise<void>
+      }
+    }
+
+    if (typeof doc.startViewTransition === 'function') {
+      const root = document.documentElement
+      setRevealOrigin(event)
+      root.setAttribute('data-theme-vt', 'active')
+
+      const transition = doc.startViewTransition(() => {
+        applyNext()
+      })
+
+      transition.finished.finally(() => {
+        root.removeAttribute('data-theme-vt')
+      })
+      return
+    }
+
+    enableThemeTransition()
+    applyNext()
   }, [])
 
   return (
@@ -108,4 +183,3 @@ export const useTheme = () => {
   }
   return context
 }
-
