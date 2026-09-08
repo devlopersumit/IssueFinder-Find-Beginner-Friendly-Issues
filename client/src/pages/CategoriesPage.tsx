@@ -280,11 +280,11 @@ const CategoriesPage: React.FC = () => {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:py-12">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            Discover Issues by Category
+          <h1 className="font-display text-3xl font-medium text-ink dark:text-white sm:text-4xl">
+            Categories
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Browse open source issues organized by type and difficulty level
+          <p className="mt-2 text-ink-muted">
+            Find fresh issues that match your skills. Pick a type, then open it on GitHub.
           </p>
         </div>
 
