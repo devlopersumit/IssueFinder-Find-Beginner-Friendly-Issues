@@ -7,6 +7,7 @@ import { useSearch } from '../contexts/SearchContext'
 import type { NaturalLanguage } from '../utils/languageDetection'
 import { getBrowserLanguage } from '../utils/languageDetection'
 import { buildGitHubQuery } from '../utils/queryBuilder'
+import { TAGLINE } from '../constants/brand'
 
 const IssuesPage: React.FC = () => {
   const { submittedSearch } = useSearch()
@@ -22,21 +23,17 @@ const IssuesPage: React.FC = () => {
   const [selectedLastActivity, setSelectedLastActivity] = useState<string | null>(null)
 
   useEffect(() => {
-    const browserLang = getBrowserLanguage()
-    setSelectedNaturalLanguages([browserLang])
+    setSelectedNaturalLanguages([getBrowserLanguage()])
   }, [])
 
   useEffect(() => {
     const categoryParam = searchParams.get('category')
     const difficultyParam = searchParams.get('difficulty')
-    
-    if (categoryParam) {
-      setSelectedCategories([categoryParam])
-    }
-    
-    if (difficultyParam) {
-      setSelectedDifficulty(difficultyParam)
-    }
+    const languageParam = searchParams.get('language')
+
+    if (categoryParam) setSelectedCategories([categoryParam])
+    if (difficultyParam) setSelectedDifficulty(difficultyParam)
+    if (languageParam) setSelectedLanguage(languageParam)
   }, [searchParams])
 
   const toggleLabel = (label: string) => {
@@ -45,12 +42,8 @@ const IssuesPage: React.FC = () => {
 
   const toggleCategory = (category: string) => {
     setSelectedCategories((prev) => {
-      if (category === 'all') {
-        return prev.includes('all') ? [] : ['all']
-      }
-      if (prev.includes(category)) {
-        return prev.filter((c) => c !== category)
-      }
+      if (category === 'all') return prev.includes('all') ? [] : ['all']
+      if (prev.includes(category)) return prev.filter((c) => c !== category)
       return [...prev.filter((c) => c !== 'all'), category]
     })
   }
@@ -66,43 +59,42 @@ const IssuesPage: React.FC = () => {
       selectedFramework,
       selectedLastActivity,
     })
-  }, [submittedSearch, selectedLabels, selectedCategories, selectedLanguage, selectedDifficulty, selectedType, selectedFramework, selectedLastActivity])
+  }, [
+    submittedSearch,
+    selectedLabels,
+    selectedCategories,
+    selectedLanguage,
+    selectedDifficulty,
+    selectedType,
+    selectedFramework,
+    selectedLastActivity,
+  ])
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse"></div>
-          <span className="text-sm font-semibold uppercase tracking-wide text-green-600 dark:text-green-400">Active Issues Only</span>
-        </div>
-        <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-3">Browse Active Issues</h1>
-        <p className="text-lg text-slate-600 dark:text-slate-400">Fresh issues from actively maintained open source projects</p>
-      </div>
+    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
+      <header className="mb-8 max-w-2xl">
+        <h1 className="font-display text-3xl font-medium tracking-tight text-ink dark:text-white sm:text-4xl">
+          Browse issues
+        </h1>
+        <p className="mt-2 text-base text-ink-muted">{TAGLINE}</p>
+      </header>
 
-      <MobileCategoryTabs
-        selectedCategories={selectedCategories}
-        onToggleCategory={toggleCategory}
-      />
+      <MobileCategoryTabs selectedCategories={selectedCategories} onToggleCategory={toggleCategory} />
 
-      <div className="mb-4 flex items-center justify-between">
-        <div className="md:hidden">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-            onClick={() => setShowMobileFilters((v) => !v)}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            {showMobileFilters ? 'Hide Filters' : 'Show Filters'}
-          </button>
-        </div>
+      <div className="mb-4 md:hidden">
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => setShowMobileFilters((v) => !v)}
+        >
+          {showMobileFilters ? 'Hide filters' : 'Filters'}
+        </button>
       </div>
 
       {showMobileFilters && (
-        <div className="md:hidden mb-4">
+        <div className="mb-6 md:hidden">
           <FiltersPanel
-            className="rounded-md"
+            className="rounded-lg"
             selectedLabels={selectedLabels}
             onToggleLabel={toggleLabel}
             selectedLanguage={selectedLanguage}
@@ -123,10 +115,10 @@ const IssuesPage: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
-        <div className="hidden md:block md:col-span-3">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
+        <aside className="hidden md:col-span-3 md:block">
           <FiltersPanel
-            className="rounded-md md:sticky md:top-4"
+            className="sticky top-20 rounded-lg"
             selectedLabels={selectedLabels}
             onToggleLabel={toggleLabel}
             selectedLanguage={selectedLanguage}
@@ -142,9 +134,9 @@ const IssuesPage: React.FC = () => {
             selectedLastActivity={selectedLastActivity}
             onChangeLastActivity={setSelectedLastActivity}
           />
-        </div>
+        </aside>
         <div className="md:col-span-9">
-          <IssueList className="rounded-md" query={query} naturalLanguageFilter={selectedNaturalLanguages} />
+          <IssueList query={query} naturalLanguageFilter={selectedNaturalLanguages} />
         </div>
       </div>
     </main>
@@ -152,4 +144,3 @@ const IssuesPage: React.FC = () => {
 }
 
 export default IssuesPage
-
