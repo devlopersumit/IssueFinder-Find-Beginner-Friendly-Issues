@@ -182,7 +182,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'IssueFinder', searchTerm, onSe
           </button>
           <button
             type="button"
-            onClick={() => setTimeout(toggleTheme, 0)}
+            onClick={toggleTheme}
             className="rounded-md p-2 text-ink-muted transition hover:bg-zinc-100 hover:text-ink dark:hover:bg-zinc-800"
             aria-label={`Switch to ${effectiveTheme === 'dark' ? 'light' : 'dark'} mode`}
           >

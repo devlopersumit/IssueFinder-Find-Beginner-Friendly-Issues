@@ -89,9 +89,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const toggleTheme = React.useCallback(() => {
     setThemeState((prevTheme) => {
-      if (prevTheme === 'light') return 'dark'
-      if (prevTheme === 'dark') return 'auto'
-      return 'light'
+      const current = getEffectiveTheme(prevTheme)
+      return current === 'dark' ? 'light' : 'dark'
     })
   }, [])
 
