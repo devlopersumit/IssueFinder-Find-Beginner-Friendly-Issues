@@ -137,22 +137,29 @@ html.theme-transitioning *,
 html.theme-transitioning *::before,
 html.theme-transitioning *::after {
   transition:
-    background-color 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-    color 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-    fill 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-    stroke 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-    outline-color 0.55s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    fill 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    outline-color 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
   transition-delay: 0s !important;
 }
 
-/* Circular reveal — same feel as sumitjha.space */
+/* Circular reveal — continuous motion, no default crossfade stall */
 @supports (view-transition-name: root) {
+  ::view-transition-group(root) {
+    animation-duration: 0.5s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation: none;
     mix-blend-mode: normal;
+    height: 100%;
+    width: 100%;
   }
 
   ::view-transition-old(root) {
@@ -169,13 +176,14 @@ html.theme-transitioning *::after {
 
   html[data-theme-vt='active']::view-transition-new(root) {
     z-index: 9999;
-    animation: theme-vt-reveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    /* Start slightly open so the first frame already moves — no “frozen” beat */
+    animation: theme-vt-reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 }
 
 @keyframes theme-vt-reveal {
   from {
-    clip-path: circle(0px at var(--vt-x) var(--vt-y));
+    clip-path: circle(12px at var(--vt-x) var(--vt-y));
   }
   to {
     clip-path: circle(var(--vt-r) at var(--vt-x) var(--vt-y));

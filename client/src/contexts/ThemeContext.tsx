@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import { flushSync } from 'react-dom'
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 
 type Theme = 'light' | 'dark' | 'auto'
 
@@ -12,8 +11,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-/** Match sumitjha.space — slow circular reveal */
-const TRANSITION_MS = 550
+const TRANSITION_MS = 500
 
 const getInitialTheme = (): Theme => {
   if (typeof window === 'undefined') return 'auto'
@@ -53,7 +51,7 @@ const applyTheme = (effectiveTheme: 'light' | 'dark') => {
     root.setAttribute('data-theme', 'light')
   }
 
-  root.setAttribute('aria-label', `Theme: ${effectiveTheme}`)
+  root.style.colorScheme = effectiveTheme
 }
 
 const enableThemeTransition = () => {
@@ -75,7 +73,7 @@ const setRevealOrigin = (event?: React.MouseEvent | MouseEvent) => {
 
   root.style.setProperty('--vt-x', `${x}px`)
   root.style.setProperty('--vt-y', `${y}px`)
-  root.style.setProperty('--vt-r', `${endRadius}px`)
+  root.style.setProperty('--vt-r', `${Math.ceil(endRadius)}px`)
 }
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -83,6 +81,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(() =>
     getEffectiveTheme(getInitialTheme())
   )
+  const themeRef = useRef(theme)
+  themeRef.current = theme
 
   useEffect(() => {
     const newEffectiveTheme = getEffectiveTheme(theme)
@@ -117,29 +117,28 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [])
 
   const toggleTheme = React.useCallback((event?: React.MouseEvent | MouseEvent) => {
+    const current = getEffectiveTheme(themeRef.current)
+    const next = current === 'dark' ? 'light' : 'dark'
+
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    const applyNext = () => {
-      flushSync(() => {
-        setThemeState((prevTheme) => {
-          const current = getEffectiveTheme(prevTheme)
-          const next = current === 'dark' ? 'light' : 'dark'
-          setEffectiveTheme(next)
-          applyTheme(next)
-          try {
-            localStorage.setItem('theme', next)
-          } catch {
-            /* ignore */
-          }
-          return next
-        })
-      })
+    const commitTheme = () => {
+      // DOM only — Tailwind dark: styles flip instantly from the html class.
+      // Avoid flushSync / heavy React work here so View Transitions don't hitch.
+      applyTheme(next)
+      try {
+        localStorage.setItem('theme', next)
+      } catch {
+        /* ignore */
+      }
+      setThemeState(next)
+      setEffectiveTheme(next)
     }
 
     if (prefersReducedMotion) {
-      applyNext()
+      commitTheme()
       return
     }
 
@@ -156,7 +155,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.setAttribute('data-theme-vt', 'active')
 
       const transition = doc.startViewTransition(() => {
-        applyNext()
+        // DOM class flip only in the critical path — no flushSync.
+        // React state is scheduled and paints after the new snapshot.
+        applyTheme(next)
+        try {
+          localStorage.setItem('theme', next)
+        } catch {
+          /* ignore */
+        }
+        setThemeState(next)
+        setEffectiveTheme(next)
       })
 
       transition.finished.finally(() => {
@@ -166,7 +174,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     enableThemeTransition()
-    applyNext()
+    commitTheme()
   }, [])
 
   return (
