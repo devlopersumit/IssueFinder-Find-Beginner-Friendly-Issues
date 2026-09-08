@@ -21,20 +21,16 @@ const RepositoriesPage: React.FC = () => {
       <header className="mb-8 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Repository explorer</p>
-            <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">Explore open-source repositories</h1>
-            <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-              Browse projects that meet our baseline quality thresholds and use filtering to narrow by language or license before diving into the details.
+            <h1 className="font-display text-3xl font-medium text-ink dark:text-white">Repositories</h1>
+            <p className="mt-2 max-w-2xl text-sm text-ink-muted">
+              Browse maintained projects, then jump into fresh issues that match your skills.
             </p>
           </div>
           <Link
-            to="/"
+            to="/issues"
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Home
+            Browse issues
           </Link>
         </div>
       </header>
