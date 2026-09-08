@@ -150,33 +150,6 @@ const BeginnerGuidePage: React.FC = () => {
     }
   ]
 
-  const resources = [
-    {
-      title: 'GitHub Guides',
-      description: 'Official GitHub guides for contributing to open source',
-      link: 'https://guides.github.com/',
-      icon: '📖'
-    },
-    {
-      title: 'First Contributions',
-      description: 'A hands-on tutorial to make your first open source contribution',
-      link: 'https://firstcontributions.github.io/',
-      icon: '🚀'
-    },
-    {
-      title: 'Git Documentation',
-      description: 'Complete Git reference and tutorials',
-      link: 'https://git-scm.com/doc',
-      icon: '📘'
-    },
-    {
-      title: 'Good First Issues',
-      description: 'Find beginner-friendly issues across GitHub',
-      link: 'https://goodfirstissues.com/',
-      icon: '✨'
-    }
-  ]
-
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       {/* Back to Home Button */}
@@ -200,32 +173,24 @@ const BeginnerGuidePage: React.FC = () => {
           </svg>
           Beginner-Friendly Guide
         </div>
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-          Start Your Open Source Journey
+        <h1 className="font-display text-4xl font-medium text-ink dark:text-white sm:text-5xl mb-4">
+          Land your first PR faster
         </h1>
-        <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-          New to open source? Don't worry! This comprehensive guide will help you make your first contribution with confidence. 
-          Learn step-by-step how to find projects, fix issues, and become part of the open source community.
+        <p className="text-lg text-ink-muted max-w-3xl mx-auto leading-relaxed">
+          A short path from setup to your first contribution. Find fresh beginner-friendly issues, then open them on GitHub.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            to="/"
-            className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+            to="/issues?difficulty=beginner"
+            className="btn-primary"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            Find Beginner Issues
+            Find beginner issues
           </Link>
           <Link
-            to="/bounty"
-            className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
+            to="/issues?category=good%20first%20issue"
+            className="btn-secondary"
           >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
-            </svg>
-            Explore Bounty Issues
+            Good first issues
           </Link>
         </div>
       </div>
@@ -362,45 +327,6 @@ const BeginnerGuidePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Resources Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            Helpful Resources
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Additional resources to help you on your open source journey
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {resources.map((resource, index) => (
-            <a
-              key={index}
-              href={resource.link}
-              target="_blank"
-              rel="noreferrer"
-              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 group"
-            >
-              <div className="flex items-start gap-4">
-                <div className="text-3xl">{resource.icon}</div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                    {resource.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    {resource.description}
-                  </p>
-                </div>
-                <svg className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </div>
-            </a>
-          ))}
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100 dark:from-emerald-950/20 dark:via-teal-950/20 dark:to-emerald-900/20 rounded-2xl border border-emerald-200 dark:border-emerald-800 p-8 sm:p-12 text-center">
         <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
@@ -412,23 +338,16 @@ const BeginnerGuidePage: React.FC = () => {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            to="/"
-            className="inline-flex items-center gap-2 px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-1"
+            to="/issues?difficulty=beginner"
+            className="inline-flex items-center gap-2 px-8 py-4 text-lg font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            Find Beginner Issues
+            Find beginner issues
           </Link>
           <Link
-            to="/bounty"
-            className="inline-flex items-center gap-2 px-8 py-4 text-lg font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
+            to="/categories"
+            className="inline-flex items-center gap-2 px-8 py-4 text-lg font-bold text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
-            </svg>
-            Explore Bounty Issues
+            Browse categories
           </Link>
         </div>
       </section>
