@@ -4,6 +4,7 @@ import { useSearch } from '../contexts/SearchContext'
 import IssueList from '../components/IssueList'
 import FiltersPanel from '../components/FiltersPanel'
 import { buildGitHubQuery } from '../utils/queryBuilder'
+import { TAGLINE } from '../constants/brand'
 
 const SearchResultsPage: React.FC = () => {
   const { submittedSearch, clearSearch } = useSearch()
@@ -46,47 +47,39 @@ const SearchResultsPage: React.FC = () => {
   }, [submittedSearch, selectedLabels, selectedCategories, selectedLanguage, selectedDifficulty, selectedType, selectedFramework, selectedLastActivity])
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            Search Results
+          <h1 className="font-display text-3xl font-medium text-ink dark:text-white">
+            Search issues
           </h1>
+          <p className="mt-2 text-sm text-ink-muted">{TAGLINE}</p>
           {submittedSearch && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Results for: <span className="font-semibold text-gray-900 dark:text-gray-100">"{submittedSearch}"</span>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <p className="text-sm text-ink-muted">
+                Results for <span className="font-semibold text-ink dark:text-zinc-100">“{submittedSearch}”</span>
               </p>
               <button
                 onClick={clearSearch}
-                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline"
+                className="text-xs font-medium text-accent hover:underline"
               >
-                Clear search
+                Clear
               </button>
             </div>
           )}
         </div>
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Home
+        <Link to="/issues" className="btn-secondary">
+          Browse all
         </Link>
       </div>
 
       <div className="mb-4 md:hidden">
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+          className="btn-secondary"
           onClick={() => setShowMobileFilters((v) => !v)}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
-          {showMobileFilters ? 'Hide Filters' : 'Show Filters'}
+          {showMobileFilters ? 'Hide filters' : 'Filters'}
         </button>
       </div>
 
