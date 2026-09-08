@@ -1,214 +1,113 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
-import { buildGitHubQuery } from '../utils/queryBuilder'
-import { HEALTH_THRESHOLDS } from '../utils/repoHealth'
-import { getIssuesCached, setIssuesCached } from '../utils/requestCache'
+import { PRODUCT_NAME, TAGLINE } from '../constants/brand'
 
-type QualitySignal = {
-  label: string
-  value: string
-  description: string
-}
-
-const qualitySignals: QualitySignal[] = [
+const previewIssues = [
   {
-    label: 'Issue freshness',
-    value: '≤ 7 days',
-    description: 'Only issues with recent activity make it through',
+    repo: 'facebook / react',
+    title: 'Improve docs for concurrent features',
+    meta: 'TypeScript · updated today · Beginner',
   },
   {
-    label: 'Repo maintenance',
-    value: `≤ ${HEALTH_THRESHOLDS.maxDaysSincePush} days`,
-    description: 'Repos must have been pushed to recently',
+    repo: 'vercel / next.js',
+    title: 'Clarify error message for missing env vars',
+    meta: 'JavaScript · updated yesterday · Beginner',
   },
   {
-    label: 'Project trust',
-    value: `≥ ${HEALTH_THRESHOLDS.minStars}★ / ${HEALTH_THRESHOLDS.minForks}⑂`,
-    description: 'Stars or forks signal a real community',
-  },
-  {
-    label: 'Difficulty tags',
-    value: 'Auto',
-    description: 'Beginner, intermediate, and advanced labels detected',
+    repo: 'rust-lang / rust',
+    title: 'Help wanted: polish compiler diagnostics',
+    meta: 'Rust · updated 2d ago · Intermediate',
   },
 ]
 
-function formatCount(count: number): string {
-  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`
-  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}k`
-  return count.toLocaleString()
-}
-
 const Hero: React.FC = () => {
-  const [liveIssueCount, setLiveIssueCount] = useState<number | null>(null)
-  const [isLoadingCount, setIsLoadingCount] = useState(true)
-
-  useEffect(() => {
-    const query = buildGitHubQuery({})
-    const cacheKey = `hero_issue_count_${query}`
-
-    const cached = getIssuesCached<number>(cacheKey)
-    if (cached !== null) {
-      setLiveIssueCount(cached)
-      setIsLoadingCount(false)
-      return
-    }
-
-    const controller = new AbortController()
-
-    async function fetchCount() {
-      try {
-        const url = `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&per_page=1`
-        const response = await fetch(url, {
-          headers: { Accept: 'application/vnd.github+json' },
-          signal: controller.signal,
-        })
-
-        if (!response.ok) return
-
-        const data = await response.json()
-        if (typeof data.total_count === 'number') {
-          setIssuesCached(cacheKey, data.total_count)
-          setLiveIssueCount(data.total_count)
-        }
-      } catch {
-        // silently fail — criteria cards still show value
-      } finally {
-        setIsLoadingCount(false)
-      }
-    }
-
-    fetchCount()
-    return () => controller.abort()
-  }, [])
-
   return (
-    <section className="relative overflow-hidden border-b border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] font-mono">
-      <div className="border-b border-gray-300 dark:border-[#30363d] bg-gray-50 dark:bg-[#161b22] px-4 py-2">
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1.5">
-            <div className="h-3 w-3 rounded-full bg-red-500"></div>
-            <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
-            <div className="h-3 w-3 rounded-full bg-green-500"></div>
+    <section className="relative overflow-hidden">
+      {/* Atmosphere */}
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_50%_-10%,rgba(13,148,136,0.14),transparent_55%),radial-gradient(ellipse_50%_40%_at_90%_10%,rgba(20,20,20,0.04),transparent),linear-gradient(180deg,#fafafa_0%,#f4f4f5_100%)] dark:bg-[radial-gradient(ellipse_70%_55%_at_50%_-10%,rgba(45,212,191,0.12),transparent_55%),linear-gradient(180deg,#09090b_0%,#18181b_100%)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.35] dark:opacity-[0.2]"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, rgba(20,20,20,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(20,20,20,0.04) 1px, transparent 1px)',
+          backgroundSize: '64px 64px',
+          maskImage: 'linear-gradient(to bottom, black 0%, transparent 85%)',
+        }}
+        aria-hidden
+      />
+
+      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-16 sm:px-6 sm:pb-14 sm:pt-20 lg:pt-24">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="animate-fade-up font-display text-2xl font-medium tracking-tight text-ink dark:text-white sm:text-3xl">
+            {PRODUCT_NAME}
+          </p>
+          <h1
+            className="animate-fade-up mt-5 font-display text-4xl font-medium leading-[1.12] text-ink sm:text-5xl sm:leading-[1.08] lg:text-6xl dark:text-white"
+            style={{ animationDelay: '80ms' }}
+          >
+            The fastest path to your first open-source PR
+          </h1>
+          <p
+            className="animate-fade-up mx-auto mt-6 max-w-xl text-lg leading-relaxed text-ink-muted sm:text-xl dark:text-zinc-400"
+            style={{ animationDelay: '160ms' }}
+          >
+            {TAGLINE}
+          </p>
+          <div
+            className="animate-fade-up mt-9 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center"
+            style={{ animationDelay: '240ms' }}
+          >
+            <Link to="/issues" className="btn-primary px-7 py-3 text-base">
+              Browse fresh issues
+            </Link>
+            <Link
+              to="/beginner-guide"
+              className="text-sm font-semibold text-ink-soft underline-offset-4 transition hover:text-ink hover:underline dark:text-zinc-300 dark:hover:text-white"
+            >
+              New here? Read the guide →
+            </Link>
           </div>
-          <span className="text-xs text-gray-600 dark:text-[#8b949e] ml-2">issuefinder.fun</span>
         </div>
-      </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 py-6 sm:py-12 lg:py-20">
-        <div className="grid gap-8 sm:gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
-          <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 border border-gray-300 dark:border-[#30363d] bg-gray-50 dark:bg-[#161b22] px-3 py-1 sm:px-4 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-[#8b949e]">
-              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-600 dark:bg-[#7ee787]" />
-              <span className="text-emerald-600 dark:text-[#7ee787]">▶</span>
-              <span className="hidden sm:inline">live open source intelligence</span>
-              <span className="sm:hidden">live osi</span>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-start gap-2 sm:gap-3 border-l-2 border-emerald-600 dark:border-[#7ee787] bg-gray-50 dark:bg-[#161b22] px-3 py-2 sm:px-5 sm:py-2.5 w-full sm:w-fit mx-auto lg:mx-0">
-                <span className="text-emerald-600 dark:text-[#7ee787] text-sm flex-shrink-0 mt-0.5">$</span>
-                <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-[#c9d1d9] leading-relaxed">
-                  Ready to make your first contribution? Start here and find issues that match your skills!
-                </p>
-              </div>
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-gray-900 dark:text-[#c9d1d9] leading-tight">
-                <span className="text-blue-600 dark:text-[#58a6ff]">find</span>{' '}
-                <span className="text-purple-600 dark:text-[#d2a8ff]">github</span>{' '}
-                <span className="text-emerald-600 dark:text-[#7ee787]">issues</span>
-                <br className="hidden sm:block" />
-                <span className="text-gray-700 dark:text-[#8b949e]">that match your skills</span>
-              </h1>
-              <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-[#8b949e] leading-relaxed px-2 sm:px-0">
-                Stop wasting time searching. We show you open-source projects and issues that are perfect for you. Filter by your favorite programming language, difficulty level, and start contributing today.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-stretch sm:items-center gap-2 sm:gap-3 sm:flex-row sm:justify-center lg:justify-start">
-              <Link
-                to="/categories"
-                className="inline-flex items-center justify-center border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-semibold text-gray-900 dark:text-[#c9d1d9] transition-colors hover:bg-gray-50 dark:hover:bg-[#161b22] hover:border-blue-500 dark:hover:border-[#58a6ff]"
-              >
-                <span className="text-emerald-600 dark:text-[#7ee787] mr-2">▶</span>
-                Explore categories
-              </Link>
-              <Link
-                to="/beginner-guide"
-                className="inline-flex items-center justify-center border border-emerald-600 dark:border-[#7ee787] bg-emerald-50 dark:bg-[#238636] px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-semibold text-emerald-700 dark:text-[#c9d1d9] transition-colors hover:bg-emerald-100 dark:hover:bg-[#2ea043]"
-              >
-                <span className="text-emerald-600 dark:text-[#7ee787] mr-2">$</span>
-                Beginner Guide
-              </Link>
-              <Link
-                to="/bounty"
-                className="inline-flex items-center justify-center border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-semibold text-gray-800 dark:text-[#c9d1d9] transition-colors hover:bg-gray-50 dark:hover:bg-[#161b22]"
-              >
-                <span className="text-orange-600 dark:text-[#f0883e] mr-2">▶</span>
-                View bounty issues
-              </Link>
-            </div>
-
-            <div className="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600 dark:text-[#8b949e] lg:justify-start px-2 sm:px-0">
-              <span className="text-emerald-600 dark:text-[#7ee787] flex-shrink-0">✓</span>
-              <span className="text-center sm:text-left">
-                Live data from GitHub — filtered for freshness and repo health, refreshed every 15 minutes.
+        {/* Product preview — visual anchor */}
+        <div
+          className="animate-fade-up mx-auto mt-14 max-w-3xl sm:mt-16"
+          style={{ animationDelay: '320ms' }}
+        >
+          <div className="overflow-hidden rounded-xl border border-paper-line/80 bg-white/90 shadow-soft backdrop-blur-sm dark:border-zinc-700/80 dark:bg-zinc-900/90">
+            <div className="flex items-center justify-between border-b border-paper-line px-4 py-3 dark:border-zinc-800">
+              <span className="text-xs font-medium tracking-wide text-ink-muted">
+                Live preview · fresh & maintained only
+              </span>
+              <span className="flex items-center gap-1.5 text-xs font-medium text-accent">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-40" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
+                </span>
+                Updated hourly
               </span>
             </div>
-          </div>
-
-          <div className="relative mt-8 lg:mt-0">
-            <div className="border border-gray-300 dark:border-[#30363d] bg-gray-50 dark:bg-[#161b22] p-4 sm:p-6">
-              <div className="mb-4 sm:mb-6 border-b border-gray-300 dark:border-[#30363d] pb-3 sm:pb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-emerald-600 dark:text-[#7ee787] text-sm">▶</span>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-[#8b949e]">
-                    How we filter issues
+            <ul className="divide-y divide-paper-line dark:divide-zinc-800">
+              {previewIssues.map((issue) => (
+                <li key={issue.title} className="px-4 py-4 text-left sm:px-5">
+                  <p className="text-sm font-semibold text-ink dark:text-zinc-100">{issue.repo}</p>
+                  <p className="mt-1 font-display text-lg font-medium leading-snug text-ink dark:text-white">
+                    {issue.title}
                   </p>
-                </div>
-                <h2 className="mt-2 text-xl sm:text-2xl font-semibold text-gray-900 dark:text-[#c9d1d9]">
-                  Quality rules, not fake stats
-                </h2>
-                <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-gray-600 dark:text-[#8b949e] leading-relaxed">
-                  Every issue passes these checks before we show it. No inflated numbers — just the criteria we actually use.
-                </p>
-              </div>
-
-              <div className="mb-4 sm:mb-6 rounded-lg border border-emerald-300 dark:border-[#238636] bg-emerald-50 dark:bg-[#0d4432]/40 px-4 py-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-[#7ee787]">
-                  Matching on GitHub right now
-                </p>
-                <p className="mt-1 text-2xl font-bold text-emerald-800 dark:text-[#7ee787]">
-                  {isLoadingCount ? (
-                    <span className="inline-block h-7 w-24 animate-pulse rounded bg-emerald-200 dark:bg-[#238636]/50" />
-                  ) : liveIssueCount !== null ? (
-                    `${formatCount(liveIssueCount)}+ issues`
-                  ) : (
-                    'Live from GitHub'
-                  )}
-                </p>
-                <p className="mt-1 text-xs text-emerald-700/80 dark:text-[#7ee787]/80">
-                  Open, unassigned, updated this week — good first issue or help wanted
-                </p>
-              </div>
-
-              <dl className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-                {qualitySignals.map((item) => (
-                  <div
-                    key={item.label}
-                    className="border border-gray-300 dark:border-[#30363d] bg-white dark:bg-[#0d1117] p-3 sm:p-4 text-left"
-                  >
-                    <dt className="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-[#8b949e]">
-                      {item.label}
-                    </dt>
-                    <dd className="mt-1 sm:mt-2 text-lg sm:text-xl font-semibold text-blue-600 dark:text-[#58a6ff]">
-                      {item.value}
-                    </dd>
-                    <p className="mt-1 text-xs text-gray-600 dark:text-[#8b949e] leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-                ))}
-              </dl>
+                  <p className="mt-1.5 text-xs text-ink-muted">{issue.meta}</p>
+                </li>
+              ))}
+            </ul>
+            <div className="border-t border-paper-line bg-zinc-50/80 px-4 py-3 text-center dark:border-zinc-800 dark:bg-zinc-950/50">
+              <Link
+                to="/issues"
+                className="text-sm font-semibold text-accent transition hover:text-accent-dark"
+              >
+                See all matching issues →
+              </Link>
             </div>
           </div>
         </div>
